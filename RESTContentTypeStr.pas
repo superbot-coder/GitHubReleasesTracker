@@ -1,4 +1,4 @@
-Unit RESTContentTypeStr;
+﻿Unit RESTContentTypeStr;
 
 interface
 

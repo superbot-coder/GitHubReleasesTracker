@@ -1,4 +1,4 @@
-unit UFrmAddProject;
+п»їunit UFrmAddProject;
 
 interface
 
@@ -219,15 +219,15 @@ begin
 
   if sEdProjectLink.Text = '' then
   begin
-    MessageBox(Handle, PChar('Введите ссылку на проект'),
+    MessageBox(Handle, PChar('Р’РІРµРґРёС‚Рµ СЃСЃС‹Р»РєСѓ РЅР° РїСЂРѕРµРєС‚'),
                PChar(CAPTION_MB), MB_ICONWARNING);
     Exit;
   end;
 
-  // Проверяю что проек уже добавлен в список
+  // РџСЂРѕРІРµСЂСЏСЋ С‡С‚Рѕ РїСЂРѕРµРє СѓР¶Рµ РґРѕР±Р°РІР»РµРЅ РІ СЃРїРёСЃРѕРє
   if CheckProjectExistes(sEdProjectLink.Text) then
   begin
-    MessageBox(Handle, PChar('Такой проек уже добавлен в список..'),
+    MessageBox(Handle, PChar('РўР°РєРѕР№ РїСЂРѕРµРє СѓР¶Рµ РґРѕР±Р°РІР»РµРЅ РІ СЃРїРёСЃРѕРє..'),
                PChar(CAPTION_MB), MB_ICONWARNING);
     Exit;
   end;
@@ -239,7 +239,7 @@ begin
   with FrmMain do
   begin
 
-    // проверка правильная ссылки; Check Existes the project
+    // РїСЂРѕРІРµСЂРєР° РїСЂР°РІРёР»СЊРЅР°СЏ СЃСЃС‹Р»РєРё; Check Existes the project
     RESTResponse.RootElement := '';
     RESTClient.Accept        := arContentTypeStr[ord(ctAPPLICATION_JSON)];
     RESTClient.BaseURL       := FApiProject;
@@ -247,37 +247,37 @@ begin
 
     if RESTResponse.StatusCode <> 200 then
     begin
-      MessageBox(Handle, PChar('Ошибка: ' + RESTResponse.StatusText +
-                 ' код: ' + IntToStr(RESTResponse.StatusCode)),
+      MessageBox(Handle, PChar('РћС€РёР±РєР°: ' + RESTResponse.StatusText +
+                 ' РєРѕРґ: ' + IntToStr(RESTResponse.StatusCode)),
                  PChar(CAPTION_MB), MB_ICONERROR);
       exit;
     end;
 
-    // Получаю имя проекта; Getting name the project
+    // РџРѕР»СѓС‡Р°СЋ РёРјСЏ РїСЂРѕРµРєС‚Р°; Getting name the project
     FProjectName := ExtractProjNameFromLink(sEdProjectLink.Text);
-    mm.Lines.Add('Название проекта: ' + FProjectName);
+    mm.Lines.Add('РќР°Р·РІР°РЅРёРµ РїСЂРѕРµРєС‚Р°: ' + FProjectName);
 
-    // Проверяю, что объект JSON создан; Checking that the JSON object is created
+    // РџСЂРѕРІРµСЂСЏСЋ, С‡С‚Рѕ РѕР±СЉРµРєС‚ JSON СЃРѕР·РґР°РЅ; Checking that the JSON object is created
     if RESTResponse.JSONValue = Nil then
     begin
-      // ошибка; error ...
-      MessageBox(Handle, PChar('Ошибка: RESTResponse.JSONValue = Nil'),
+      // РѕС€РёР±РєР°; error ...
+      MessageBox(Handle, PChar('РћС€РёР±РєР°: RESTResponse.JSONValue = Nil'),
                  PChar(CAPTION_MB), MB_ICONERROR);
       Exit;
     end;
 
-    // Получаю URL аватарки проекта; Getting the avatar URL of the project
+    // РџРѕР»СѓС‡Р°СЋ URL Р°РІР°С‚Р°СЂРєРё РїСЂРѕРµРєС‚Р°; Getting the avatar URL of the project
     JSONData := RESTResponse.JSONValue.FindValue('owner').FindValue('avatar_url');
     if JSONData <> Nil then FAvatar_url := JSONData.Value;
 
-    // Получаю директорию проекта; Getting the project directory
+    // РџРѕР»СѓС‡Р°СЋ РґРёСЂРµРєС‚РѕСЂРёСЋ РїСЂРѕРµРєС‚Р°; Getting the project directory
     if sDirEdSaveDir.Text <> '' then
       FProgectDir := sDirEdSaveDir.Text
     else
       FProgectDir := GLProjectsPath + FProjectName;
     if Not DirectoryExists(FProgectDir) then ForceDirectories(FProgectDir);
 
-    // Скачиваю файл аватарки; Downloading avatarka file
+    // РЎРєР°С‡РёРІР°СЋ С„Р°Р№Р» Р°РІР°С‚Р°СЂРєРё; Downloading avatarka file
     RESTClient.BaseURL       := FAvatar_url;
     RESTClient.Accept        := '';
     RESTResponse.RootElement := '';
@@ -285,20 +285,20 @@ begin
 
     if RESTResponse.StatusCode = 200 then // 'StatusCode = 200 OK.
     begin
-      // получаю расширение и тип картинки; getting extension and image(avatar) type
+      // РїРѕР»СѓС‡Р°СЋ СЂР°СЃС€РёСЂРµРЅРёРµ Рё С‚РёРї РєР°СЂС‚РёРЅРєРё; getting extension and image(avatar) type
       ext := GetImageExtention(RESTResponse.ContentType);
-      // Пoлучаю имя файла для сохранения аватарки
+      // РџoР»СѓС‡Р°СЋ РёРјСЏ С„Р°Р№Р»Р° РґР»СЏ СЃРѕС…СЂР°РЅРµРЅРёСЏ Р°РІР°С‚Р°СЂРєРё
       // Getting the file name to save the avatar
       FAvatarFileName := FProgectDir + '\Avatar' + ext;
-      // [-] Временно скачиваю аватарку в "TEMP"; Temporarily download the avatark to "TEMP"
+      // [-] Р’СЂРµРјРµРЅРЅРѕ СЃРєР°С‡РёРІР°СЋ Р°РІР°С‚Р°СЂРєСѓ РІ "TEMP"; Temporarily download the avatark to "TEMP"
       // [-] FAvatarFileNameTemp := TEMP + '\' + 'Avatar_' + FProjectName + ext;
       TFile.WriteAllBytes(FAvatarFileName, RESTResponse.RawBytes);
       sImagProject.Picture.LoadFromFile(FAvatarFileName);
 
     end;
 
-    // Проверяю существуют ли релизы; Checking if releases exist
-    // Поучаю самую последнюю версию релиза; I'll get the latest release
+    // РџСЂРѕРІРµСЂСЏСЋ СЃСѓС‰РµСЃС‚РІСѓСЋС‚ Р»Рё СЂРµР»РёР·С‹; Checking if releases exist
+    // РџРѕСѓС‡Р°СЋ СЃР°РјСѓСЋ РїРѕСЃР»РµРґРЅСЋСЋ РІРµСЂСЃРёСЋ СЂРµР»РёР·Р°; I'll get the latest release
     RESTClient.BaseURL       := FApiReleases;
     RESTClient.Accept        := arContentTypeStr[ord(ctAPPLICATION_JSON)];
     RESTResponse.RootElement := '[0]';
@@ -306,33 +306,33 @@ begin
 
     If RESTResponse.StatusCode <> 200 then
     begin
-      mm.Lines.Add('Ошибка: StatusCode: ' + IntToStr(RESTResponse.StatusCode) +
+      mm.Lines.Add('РћС€РёР±РєР°: StatusCode: ' + IntToStr(RESTResponse.StatusCode) +
                    ' ' + RESTResponse.StatusText);
       Exit;
     end;
 
     if RESTResponse.JSONValue = Nil then
     begin
-      mm.Lines.Add('Не найдено ни одного опубликованого релиза.');
-      mm.Lines.Add('Проверка выполнена.');
+      mm.Lines.Add('РќРµ РЅР°Р№РґРµРЅРѕ РЅРё РѕРґРЅРѕРіРѕ РѕРїСѓР±Р»РёРєРѕРІР°РЅРѕРіРѕ СЂРµР»РёР·Р°.');
+      mm.Lines.Add('РџСЂРѕРІРµСЂРєР° РІС‹РїРѕР»РЅРµРЅР°.');
       MessageBox(Handle, PChar(mm.Lines.Text),
                 PChar(CAPTION_MB), MB_ICONINFORMATION);
     end;
 
     if RESTResponse.JSONValue.FindValue('tag_name') <> nil then
     begin
-      mm.Lines.Add('Имя релиза: ' + RESTResponse.JSONValue.FindValue('name').Value);
+      mm.Lines.Add('РРјСЏ СЂРµР»РёР·Р°: ' + RESTResponse.JSONValue.FindValue('name').Value);
       FLastReleaseVersion := RESTResponse.JSONValue.FindValue('tag_name').Value;
       FPublishRelease     := RESTResponse.JSONValue.FindValue('published_at').Value;
-      mm.Lines.Add('Дата публикации последнего релиза: ' + FPublishRelease);
-      mm.Lines.Add('Версия последнего релиза: ' + FLastReleaseVersion);
-      mm.Lines.Add('Проверка выполнена.');
+      mm.Lines.Add('Р”Р°С‚Р° РїСѓР±Р»РёРєР°С†РёРё РїРѕСЃР»РµРґРЅРµРіРѕ СЂРµР»РёР·Р°: ' + FPublishRelease);
+      mm.Lines.Add('Р’РµСЂСЃРёСЏ РїРѕСЃР»РµРґРЅРµРіРѕ СЂРµР»РёР·Р°: ' + FLastReleaseVersion);
+      mm.Lines.Add('РџСЂРѕРІРµСЂРєР° РІС‹РїРѕР»РЅРµРЅР°.');
       MessageBox(Handle, PChar(mm.Lines.Text),
                  PChar(CAPTION_MB), MB_ICONINFORMATION);
     end;
   end;
 
-  // Добавляю новую запись в массив arProjectList
+  // Р”РѕР±Р°РІР»СЏСЋ РЅРѕРІСѓСЋ Р·Р°РїРёСЃСЊ РІ РјР°СЃСЃРёРІ arProjectList
   // Adding a new entry to the array arProjectList
   SetLength(arProjectList, Length(arProjectList) + 1);
   with arProjectList[Length(arProjectList) - 1] do
