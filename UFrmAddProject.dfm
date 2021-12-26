@@ -3,7 +3,7 @@ object FrmAddProject: TFrmAddProject
   Top = 0
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
-  Caption = 'FrmAddProject'
+  Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1085#1086#1074#1099' '#1087#1088#1086#1077#1082#1090
   ClientHeight = 483
   ClientWidth = 585
   Color = clBtnFace
@@ -41,7 +41,7 @@ object FrmAddProject: TFrmAddProject
     Caption = #1060#1080#1083#1100#1090#1088' ('#1074#1087#1080#1096#1080#1090#1077' '#1089#1083#1086#1074#1072' '#1095#1077#1088#1077#1079' '#1079#1072#1087#1103#1090#1091#1102'):'
   end
   object sBtnApply: TsButton
-    Left = 296
+    Left = 216
     Top = 440
     Width = 145
     Height = 33
@@ -112,31 +112,13 @@ object FrmAddProject: TFrmAddProject
     TabOrder = 6
     Text = 'windows, win, win64, zip, rar'
   end
-  object mm: TMemo
-    Left = 16
-    Top = 344
-    Width = 553
-    Height = 89
-    ScrollBars = ssVertical
-    TabOrder = 7
-  end
-  object sBtnCheck: TsButton
-    Left = 136
-    Top = 440
-    Width = 145
-    Height = 33
-    Caption = #1055' '#1056' '#1054' '#1042' '#1045' '#1056' '#1048' '#1058' '#1068
-    TabOrder = 8
-    OnClick = sBtnCheckClick
-  end
   object sPnlImage: TsPanel
     Left = 472
     Top = 16
     Width = 97
     Height = 113
     BevelOuter = bvLowered
-    Caption = 'sPnlImage'
-    TabOrder = 9
+    TabOrder = 7
     object sImagProject: TsImage
       Left = 8
       Top = 8
@@ -160,7 +142,19 @@ object FrmAddProject: TFrmAddProject
     Width = 288
     Height = 17
     Caption = #1057#1082#1072#1095#1072#1090#1100' '#1087#1086#1089#1083#1077#1076#1085#1080#1081' '#1088#1077#1083#1080#1079' '#1087#1088#1080' '#1076#1086#1073#1072#1074#1083#1077#1085#1085#1080' '#1087#1088#1086#1077#1082#1090#1072
-    TabOrder = 10
+    TabOrder = 8
+  end
+  object mm: TsMemo
+    Left = 16
+    Top = 344
+    Width = 553
+    Height = 81
+    Lines.Strings = (
+      'mm')
+    ScrollBars = ssVertical
+    TabOrder = 9
+    Text = 'mm'
+    BoundLabel.ParentFont = False
   end
   object sSkinProvider: TsSkinProvider
     AddedTitle.Font.Charset = DEFAULT_CHARSET
@@ -172,11 +166,5 @@ object FrmAddProject: TFrmAddProject
     TitleButtons = <>
     Left = 56
     Top = 360
-  end
-  object ImageList: TImageList
-    ColorDepth = cd32Bit
-    DrawingStyle = dsTransparent
-    Left = 416
-    Top = 336
   end
 end

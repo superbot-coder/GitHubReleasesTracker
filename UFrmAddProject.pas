@@ -8,7 +8,7 @@ uses
   sButton, sGroupBox, sCheckBox, Vcl.Mask, sMaskEdit, sCustomComboEdit,
   sToolEdit, sLabel, Vcl.ComCtrls, sListView, sListBox, System.ImageList,
   Vcl.ImgList, json,System.IOUtils, REST.Types, RESTContentTypeStr, StrUtils,
-  Vcl.ExtCtrls, acImage, acPNG, sPanel, System.IniFiles;
+  Vcl.ExtCtrls, acImage, acPNG, sPanel, System.IniFiles, sMemo;
 
 type
   TFrmAddProject = class(TForm)
@@ -20,16 +20,14 @@ type
     sChBoxSubDir: TsCheckBox;
     sRGRulesNotis: TsRadioGroup;
     sRGRuleDownload: TsRadioGroup;
-    ImageList: TImageList;
     sEdFilter: TsEdit;
     sLblFilter: TsLabel;
     sEdProjectLink: TsEdit;
-    mm: TMemo;
     sImagProject: TsImage;
-    sBtnCheck: TsButton;
     sLblAvatar: TsLabel;
     sPnlImage: TsPanel;
     sChBoxDownloadLastRelease: TsCheckBox;
+    mm: TsMemo;
     procedure sBtnApplyClick(Sender: TObject);
     function ConverLinkToApiLink(Link: String): String;
     Procedure AddProjectList;
@@ -38,8 +36,8 @@ type
     function ExcludeTrailingURLDelimiter(URL: String): String;
     function GetImageExtention(ContentType: string): String;
     procedure sEdProjectLinkChange(Sender: TObject);
-    procedure sBtnCheckClick(Sender: TObject);
-    procedure SaveAddedNewProject(Index: Int16);
+    procedure SaveAddedNewProject(Index: Integer);
+    function CheckProjectExistes(URLLink: String): boolean;
   private
     { Private declarations }
     FApiProject         : String;
@@ -48,7 +46,7 @@ type
     FAvatar_url         : string;
     FProgectDir         : string;
     FAvatarFileName     : String;
-    FAvatarFileNameTemp : String;
+    //FAvatarFileNameTemp : String;
     FLastReleaseVersion : String;
     FProjChecked        : Boolean;
     FPublishRelease     : String;
@@ -81,6 +79,18 @@ Uses UFrmMain;
 procedure TFrmAddProject.AddProjectList;
 begin
   //
+end;
+
+function TFrmAddProject.CheckProjectExistes(URLLink: String): boolean;
+var i: SmallInt;
+begin
+  Result := False;
+  for i := 0 to Length(arProjectList)-1 do
+  begin
+    if arProjectList[i].ProjectUrl = sEdProjectLink.Text then
+      Result := true;
+    exit;
+  end;
 end;
 
 function TFrmAddProject.ConverLinkToApiLink(Link: String): String;
@@ -120,25 +130,26 @@ end;
 procedure TFrmAddProject.FrmShowInit;
 begin
   // init controls
-  sEdProjectLink.Text := '';
-  //sEdFilter.Text      := '';
-  sDirEdSaveDir.Text  := '';
-  sBtnApply.Enabled   := False;
-  sBtnCheck.Enabled   := True;
+  sEdProjectLink.Text       := '';
+  //sEdFilter.Text          := '';
+  sDirEdSaveDir.Text        := '';
+  sBtnApply.Enabled         := False;
   sRGRuleDownload.ItemIndex := 0;
   sRGRulesNotis.ItemIndex   := 0;
   sChBoxSubDir.Checked      := True;
   sChBoxDownloadLastRelease.Checked := false;
+  sImagProject.Picture      := Nil;
+  mm.Clear;
 
   // init values
-  Applay             := false;
+  Applay              := false;
   FApiProject         := '';
+  FProgectDir         := '';
   FApiReleases        := '';
   FProjectName        := '';
   FAvatar_url         := '';
-  FProgectDir         := '';
   FAvatarFileName     := '';
-  FAvatarFileNameTemp := '';
+  //FAvatarFileNameTemp := '';
   FLastReleaseVersion := '';
 
   ShowModal;
@@ -162,13 +173,34 @@ begin
     else Result := '';
 end;
 
-procedure TFrmAddProject.SaveAddedNewProject(Index: Int16);
+procedure TFrmAddProject.SaveAddedNewProject(Index: Integer);
 var
   INI: TIniFile;
+  Section: string;
 begin
-  INI := TIniFile.Create('');
+
+  if Not DirectoryExists(ConfigDir) then ForceDirectories(ConfigDir);
+  Section := 'PROJECT_LIST\'+ arProjectList[Index].ProjectName;
+
+  INI := TIniFile.Create(FileConfig);
   try
-    //
+    with INI do
+    begin
+      WriteString(Section, 'ProjectUrl', arProjectList[Index].ProjectUrl);
+      WriteString(Section, 'ProjectDir', arProjectList[Index].ProjectDir);
+      WriteString(Section, 'ApiProjUrl', arProjectList[Index].ApiProjectUrl);
+      WriteString(Section, 'ApiReleasesUrl', arProjectList[Index].ApiReleasesUrl);
+      WriteString(Section, 'ProjectName', arProjectList[Index].ProjectName);
+      WriteString(Section, 'AvatarFile', arProjectList[Index].AvatarFile);
+      WriteString(Section, 'AvatarUrl',arProjectList[Index].AvatarUrl );
+      WriteString(Section, 'Filters', arProjectList[Index].Filters);
+      WriteString(Section, 'DatePublish', arProjectList[Index].DatePublish);
+      WriteString(Section, 'LastVersion', arProjectList[Index].LastVersion);
+      WriteDateTime(Section, 'LastChecked', arProjectList[Index].LastChecked);
+      WriteInteger(Section, 'RuleDownload', arProjectList[Index].RuleDownload);
+      WriteInteger(Section, 'RuleNotis', arProjectList[Index].RuleNotis);
+      WriteBool(Section, 'NeedSubDir', arProjectList[Index].NeedSubDir);
+    end;
   finally
     INI.Free;
   end;
@@ -181,7 +213,7 @@ var
   x        : SmallInt;
 begin
 
-  sBtnCheck.Enabled := false;
+  sBtnApply.Enabled := false;
 
   if sEdProjectLink.Text = '' then sEdProjectLink.Text := test_url;
 
@@ -192,9 +224,17 @@ begin
     Exit;
   end;
 
+  // Проверяю что проек уже добавлен в список
+  if CheckProjectExistes(sEdProjectLink.Text) then
+  begin
+    MessageBox(Handle, PChar('Такой проек уже добавлен в список..'),
+               PChar(CAPTION_MB), MB_ICONWARNING);
+    Exit;
+  end;
+
   sEdProjectLink.Text := ExcludeTrailingURLDelimiter(Trim(sEdProjectLink.Text));
   FApiProject         := ConverLinkToApiLink(sEdProjectLink.Text);
-  FApiReleases         := FApiProject + '/releases';
+  FApiReleases        := FApiProject + '/releases';
 
   with FrmMain do
   begin
@@ -226,9 +266,16 @@ begin
       Exit;
     end;
 
-    // Получаю путь аватарки проекта; Getting the avatar path of the project
+    // Получаю URL аватарки проекта; Getting the avatar URL of the project
     JSONData := RESTResponse.JSONValue.FindValue('owner').FindValue('avatar_url');
     if JSONData <> Nil then FAvatar_url := JSONData.Value;
+
+    // Получаю директорию проекта; Getting the project directory
+    if sDirEdSaveDir.Text <> '' then
+      FProgectDir := sDirEdSaveDir.Text
+    else
+      FProgectDir := GLProjectsPath + FProjectName;
+    if Not DirectoryExists(FProgectDir) then ForceDirectories(FProgectDir);
 
     // Скачиваю файл аватарки; Downloading avatarka file
     RESTClient.BaseURL       := FAvatar_url;
@@ -240,11 +287,13 @@ begin
     begin
       // получаю расширение и тип картинки; getting extension and image(avatar) type
       ext := GetImageExtention(RESTResponse.ContentType);
-
-      // Временно скачиваю аватарку в "TEMP"; Temporarily download the avatark to "TEMP"
-      FAvatarFileNameTemp := TEMP + '\' + 'Avatar_' + FProjectName + ext;
-      TFile.WriteAllBytes(FAvatarFileNameTemp, RESTResponse.RawBytes);
-      sImagProject.Picture.LoadFromFile(FAvatarFileNameTemp);
+      // Пoлучаю имя файла для сохранения аватарки
+      // Getting the file name to save the avatar
+      FAvatarFileName := FProgectDir + '\Avatar' + ext;
+      // [-] Временно скачиваю аватарку в "TEMP"; Temporarily download the avatark to "TEMP"
+      // [-] FAvatarFileNameTemp := TEMP + '\' + 'Avatar_' + FProjectName + ext;
+      TFile.WriteAllBytes(FAvatarFileName, RESTResponse.RawBytes);
+      sImagProject.Picture.LoadFromFile(FAvatarFileName);
 
     end;
 
@@ -282,155 +331,32 @@ begin
                  PChar(CAPTION_MB), MB_ICONINFORMATION);
     end;
   end;
-
-
- {------------------------------------------------------}
-
-  if sDirEdSaveDir.Text <> '' then
-    FProgectDir := sDirEdSaveDir.Text
-  else
-    FProgectDir := GLProjectsPath + FProjectName;
-
-  if Not DirectoryExists(FProgectDir) then ForceDirectories(FProgectDir);
-  FAvatarFileName := FProgectDir + '\Avatar' + FProjectName + ext;
-
-  if FileExists(FAvatarFileNameTemp) then
-    CopyFile(Pchar(FAvatarFileNameTemp), PChar(FAvatarFileName), false);
-  DeleteFile(FAvatarFileNameTemp);
 
   // Добавляю новую запись в массив arProjectList
   // Adding a new entry to the array arProjectList
   SetLength(arProjectList, Length(arProjectList) + 1);
   with arProjectList[Length(arProjectList) - 1] do
   begin
-    ProjLink     := sEdProjectLink.Text;
-    ApiProjLink  := FApiProject;
-    ProjName     := FProjectName;
-    Filters      := sEdFilter.Text;
-    DatePublish  := FPublishRelease;
-    LastVersion  := FLastReleaseVersion;
-    RuleDownload := sRGRuleDownload.ItemIndex;
-    RuleNotis    := sRGRulesNotis.ItemIndex;
+    ProjectUrl     := sEdProjectLink.Text;
+    ProjectDir     := FProgectDir;
+    ApiProjectUrl  := FApiProject;
+    ApiReleasesUrl := FApiReleases;
+    ProjectName    := FProjectName;
+    AvatarFile     := FAvatarFileName;
+    AvatarUrl      := FAvatar_url;
+    Filters        := sEdFilter.Text;
+    DatePublish    := FPublishRelease;
+    LastVersion    := FLastReleaseVersion;
+    LastChecked    := Date + Time;
+    RuleDownload   := sRGRuleDownload.ItemIndex;
+    RuleNotis      := sRGRulesNotis.ItemIndex;
   end;
 
-
+  SaveAddedNewProject(Length(arProjectList) - 1);
 
   Applay := true;
-  sBtnApply.Enabled := false;
-  // Close;
-end;
-
-procedure TFrmAddProject.sBtnCheckClick(Sender: TObject);
-var
-  JSONData : TJSONValue;
-  ext      : string;
-  x        : SmallInt;
-begin
-
-  sBtnCheck.Enabled := false;
-
-  if sEdProjectLink.Text = '' then sEdProjectLink.Text := test_url;
-
-  if sEdProjectLink.Text = '' then
-  begin
-    MessageBox(Handle, PChar('Введите ссылку на проект'),
-               PChar(CAPTION_MB), MB_ICONWARNING);
-    Exit;
-  end;
-
-  sEdProjectLink.Text := ExcludeTrailingURLDelimiter(Trim(sEdProjectLink.Text));
-  FApiProject         := ConverLinkToApiLink(sEdProjectLink.Text);
-  FApiReleases         := FApiProject + '/releases';
-
-  with FrmMain do
-  begin
-
-    // проверка правильная ссылки; Check Existes the project
-    RESTResponse.RootElement := '';
-    RESTClient.Accept        := arContentTypeStr[ord(ctAPPLICATION_JSON)];
-    RESTClient.BaseURL       := FApiProject;
-    RESTRequest.Execute;
-
-    if RESTResponse.StatusCode <> 200 then
-    begin
-      MessageBox(Handle, PChar('Ошибка: ' + RESTResponse.StatusText +
-                 ' код: ' + IntToStr(RESTResponse.StatusCode)),
-                 PChar(CAPTION_MB), MB_ICONERROR);
-      exit;
-    end;
-
-    // Получаю имя проекта; Getting name the project
-    FProjectName := ExtractProjNameFromLink(sEdProjectLink.Text);
-    mm.Lines.Add('Название проекта: ' + FProjectName);
-
-    // Проверяю, что объект JSON создан; Checking that the JSON object is created
-    if RESTResponse.JSONValue = Nil then
-    begin
-      // ошибка; error ...
-      MessageBox(Handle, PChar('Ошибка: RESTResponse.JSONValue = Nil'),
-                 PChar(CAPTION_MB), MB_ICONERROR);
-      Exit;
-    end;
-
-    // Получаю путь аватарки проекта; Getting the avatar path of the project
-    JSONData := RESTResponse.JSONValue.FindValue('owner').FindValue('avatar_url');
-    if JSONData <> Nil then FAvatar_url := JSONData.Value;
-
-    // Скачиваю файл аватарки; Downloading avatarka file
-    RESTClient.BaseURL       := FAvatar_url;
-    RESTClient.Accept        := '';
-    RESTResponse.RootElement := '';
-    RESTRequest.Execute;
-
-    if RESTResponse.StatusCode = 200 then // 'StatusCode = 200 OK.
-    begin
-      // получаю расширение и тип картинки; getting extension and image(avatar) type
-      ext := GetImageExtention(RESTResponse.ContentType);
-
-      // Временно скачиваю аватарку в "TEMP"; Temporarily download the avatark to "TEMP"
-      FAvatarFileNameTemp := TEMP + '\' + 'Avatar_' + FProjectName + ext;
-      TFile.WriteAllBytes(FAvatarFileNameTemp, RESTResponse.RawBytes);
-      sImagProject.Picture.LoadFromFile(FAvatarFileNameTemp);
-
-    end;
-
-    // Проверяю существуют ли релизы; Checking if releases exist
-    // Поучаю самую последнюю версию релиза; I'll get the latest release
-    RESTClient.BaseURL       := FApiReleases;
-    RESTClient.Accept        := arContentTypeStr[ord(ctAPPLICATION_JSON)];
-    RESTResponse.RootElement := '[0]';
-    RESTRequest.Execute;
-
-    If RESTResponse.StatusCode <> 200 then
-    begin
-      mm.Lines.Add('Ошибка: StatusCode: ' + IntToStr(RESTResponse.StatusCode) +
-                   ' ' + RESTResponse.StatusText);
-      Exit;
-    end;
-
-    if RESTResponse.JSONValue = Nil then
-    begin
-      mm.Lines.Add('Не найдено ни одного опубликованого релиза.');
-      mm.Lines.Add('Проверка выполнена.');
-      MessageBox(Handle, PChar(mm.Lines.Text),
-                PChar(CAPTION_MB), MB_ICONINFORMATION);
-    end;
-
-    if RESTResponse.JSONValue.FindValue('tag_name') <> nil then
-    begin
-      mm.Lines.Add('Имя релиза: ' + RESTResponse.JSONValue.FindValue('name').Value);
-      FLastReleaseVersion := RESTResponse.JSONValue.FindValue('tag_name').Value;
-      FPublishRelease     := RESTResponse.JSONValue.FindValue('published_at').Value;
-      mm.Lines.Add('Дата публикации последнего релиза: ' + FPublishRelease);
-      mm.Lines.Add('Версия последнего релиза: ' + FLastReleaseVersion);
-      mm.Lines.Add('Проверка выполнена.');
-      MessageBox(Handle, PChar(mm.Lines.Text),
-                 PChar(CAPTION_MB), MB_ICONINFORMATION);
-    end;
-  end;
-
   sBtnApply.Enabled := true;
-  sBtnCheck.Enabled := true;
+  Close;
 
 end;
 

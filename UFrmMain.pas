@@ -6,19 +6,25 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.Menus, sSkinManager, Vcl.ComCtrls,
   sListView, System.ImageList, Vcl.ImgList, REST.Types, REST.Client,
-  Data.Bind.Components, Data.Bind.ObjectScope;
+  Data.Bind.Components, Data.Bind.ObjectScope, Vcl.StdCtrls, acPNG,
+  Vcl.ExtCtrls, acImage, Vcl.Imaging.pngimage;
 
 type
   TProjectListRec = Record
-    ProjLink     : string;
-    ApiProjLink  : string; // Ali Project Releases Link
-    ProjName     : string;
-    Filters      : string;
-    DatePublish  : string;
-    LastVersion  : string;
-    RuleDownload : UInt8;
-    RuleNotis    : UInt8;
-    SubDir       : Boolean;
+    ProjectUrl     : string; // Project URL
+    ProjectDir     : string; // Project Directory
+    ApiProjectUrl  : string; // Api Project URL
+    ApiReleasesUrl : string; // Api Project Releases URL
+    ProjectName    : string; // Project name
+    AvatarFile     : string; //
+    AvatarUrl      : string; //
+    Filters        : string; //
+    DatePublish    : string; //
+    LastVersion    : string; //
+    LastChecked    : TDateTime; //
+    RuleDownload   : UInt8;
+    RuleNotis      : UInt8;
+    NeedSubDir     : Boolean;
   End;
 
 type
@@ -28,13 +34,18 @@ type
     MM_AddReleases: TMenuItem;
     sSkinManager: TsSkinManager;
     sLVProj: TsListView;
-    ImgListProj: TImageList;
+    ImageListProj: TImageList;
     RESTClient: TRESTClient;
     RESTRequest: TRESTRequest;
     RESTResponse: TRESTResponse;
+    Button1: TButton;
     procedure MM_AddReleasesClick(Sender: TObject);
     function AddItems: Integer;
     procedure FormCreate(Sender: TObject);
+
+    //https://stackoverflow.com/questions/8589096/convert-png-jpg-gif-to-ico
+    function LoadAvatarToImageList(AvatarFile: String): integer;
+    procedure Button1Click(Sender: TObject);
   private
     { Private declarations }
   public
@@ -42,34 +53,36 @@ type
   end;
 
 var
-  FrmMain: TFrmMain;
-  CurrDir: String;
-  CurrPath: String;
-  GLProjectsPath: String;
-  arProjectList: array of TProjectListRec;
-  TEMP: String;
+  FrmMain    : TFrmMain;
+  CurrDir    : String;
+  CurrPath   : String;
+  TEMP       : String;
+  ConfigDir  : String;
+  FileConfig : string;
+  GLProjectsPath : String;
+  arProjectList  : array of TProjectListRec;
 
 Const
   CAPTION_MB = 'GitHub Releases Tracker';
-  c_lv_proj_name  = 0;
-  c_lv_version    = 1;
-  c_lv_dt_relises = 2;
-  c_lv_last_check = 3;
+  lv_proj_version     = 0;
+  lv_date_publish     = 1;
+  lv_date_last_check  = 2;
+  lv_project_url      = 3;
   // ALL_PROJECT_DIR = 'GitHubReleasesTracker';
 
 implementation
 
 {$R *.dfm}
 
-Uses UFrmAddProject;
+Uses UFrmAddProject, UFrmSettings;
 
 function TFrmMain.AddItems: Integer;
 begin
   with sLVProj.Items.Add do
   begin
-    Caption := IntToStr(Index + 1);
+    Caption := ''; IntToStr(Index + 1);
     Result  := Index;
-    ImageIndex := -1;
+    ImageIndex := 0;
     SubItems.Add('');
     SubItems.Add('');
     SubItems.Add('');
@@ -77,18 +90,67 @@ begin
   end;
 end;
 
+procedure TFrmMain.Button1Click(Sender: TObject);
+var x: integer;
+begin
+  x := AddItems;
+  sLVProj.Items[x].ImageIndex := 2;
+end;
+
 procedure TFrmMain.FormCreate(Sender: TObject);
 begin
+  Caption  := CAPTION_MB;
   CurrDir  := ExtractFileDir(Application.ExeName);
   CurrPath := CurrDir + PathDelim;
   TEMP     := GetEnvironmentVariable('TEMP');
   GLProjectsPath := GetEnvironmentVariable('USERPROFILE');
   GLProjectsPath := GLProjectsPath + '\Downloads\GitHubReleasesTracker\';
+  ConfigDir      := GetEnvironmentVariable('APPDATA') + '\GitHubReleasesTracker';
+  FileConfig     := ConfigDir + '\Config.ini';
+end;
+
+function TFrmMain.LoadAvatarToImageList(AvatarFile: String): integer;
+var
+  Img   : TImage;
+  BmImg : TBitmap;
+  Bmp   : TBitmap;
+begin
+  Img   := TImage.Create(Owner);
+  BmImg := TBitmap.Create;
+  Bmp   := TBitmap.Create;
+  try
+    Img.Picture.LoadFromFile(AvatarFile);
+    Img.Width  := 32;
+    Img.Height := 32;
+    Img.Stretch := True;
+
+    //BmImg.PixelFormat     := pf32bit;
+    //BmImg.Transparent     := true;
+
+    BmImg.Assign(Img.Picture.Graphic);
+
+    Bmp.PixelFormat      := pf32bit;
+    Bmp.Transparent      := true;
+    Bmp.TransparentColor := clBlack;
+
+    Bmp.SetSize(32, 32);
+
+    SetStretchBltMode(Bmp.Canvas.Handle, HALFTONE);
+    StretchBlt(Bmp.Canvas.Handle, 0, 0, Bmp.Width, Bmp.Height,
+              BmImg.Canvas.Handle, 0, 0, BmImg.Width, BmImg.Height, SRCCOPY);
+
+    Result := ImageListProj.AddMasked(Bmp, clNone);
+
+  finally
+    Img.Free;
+    BmImg.Free;
+    Bmp.Free;
+  end;
 end;
 
 procedure TFrmMain.MM_AddReleasesClick(Sender: TObject);
 var
-  x, i: SmallInt;
+  i, x: Integer;
 begin
   FrmAddProject.FrmShowInit;
   if Not FrmAddProject.Applay then Exit;
@@ -97,10 +159,11 @@ begin
   x := AddItems;
   with sLVProj.Items[x] do
   begin
-    SubItems[c_lv_proj_name]  := arProjectList[i].ProjName;
-    SubItems[c_lv_version]    := 'не известно';
-    SubItems[c_lv_dt_relises] := 'не известно';
-    SubItems[c_lv_last_check] := 'не известно';
+    Caption := arProjectList[i].ProjectName;
+    SubItems[lv_proj_version]    := arProjectList[i].LastVersion;
+    SubItems[lv_date_publish]    := arProjectList[i].DatePublish;
+    SubItems[lv_date_last_check] := DateTimeToStr(arProjectList[i].LastChecked);
+    SubItems[lv_project_url]     := arProjectList[i].ProjectUrl;
   end;
 
 end;
