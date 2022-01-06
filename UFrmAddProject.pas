@@ -37,19 +37,20 @@ type
     function GetImageExtention(ContentType: string): String;
     procedure sEdProjectLinkChange(Sender: TObject);
     procedure SaveAddedNewProject(Index: Integer);
-    function CheckProjectExistes(URLLink: String): boolean;
+    function CheckProjectExistes(URL: String): boolean;
   private
     { Private declarations }
     FApiProject         : String;
     FApiReleases        : string;
     FProjectName        : string;
+    FFullName           : string;
     FAvatar_url         : string;
     FProgectDir         : string;
     FAvatarFileName     : String;
-    //FAvatarFileNameTemp : String;
     FLastReleaseVersion : String;
     FProjChecked        : Boolean;
     FPublishRelease     : String;
+
   public
     { Public declarations }
     Applay: Boolean;
@@ -57,14 +58,6 @@ type
 
 var
   FrmAddProject: TFrmAddProject;
-  // ApiProject         : String;
-  //ApiReleases        : string;
-  //ProjectName        : string;
-  //avatar_url         : string;
-  //ProgectDir         : string;
-  //AvatarFileName     : String;
-  //tmpAvatarFileName  : String;
-  //LastReleaseVersion : String;
 
 const
    test_url = 'https://github.com/superbot-coder/chia_plotting_tools';
@@ -81,15 +74,20 @@ begin
   //
 end;
 
-function TFrmAddProject.CheckProjectExistes(URLLink: String): boolean;
+function TFrmAddProject.CheckProjectExistes(URL: String): boolean;
 var i: SmallInt;
 begin
   Result := False;
+
+
+
   for i := 0 to Length(arProjectList)-1 do
   begin
-    if arProjectList[i].ProjectUrl = sEdProjectLink.Text then
+    if arProjectList[i].ProjectUrl = URL then
+    begin
       Result := true;
-    exit;
+      exit;
+    end;
   end;
 end;
 
@@ -147,9 +145,9 @@ begin
   FProgectDir         := '';
   FApiReleases        := '';
   FProjectName        := '';
+  FFullName           := '';
   FAvatar_url         := '';
   FAvatarFileName     := '';
-  //FAvatarFileNameTemp := '';
   FLastReleaseVersion := '';
 
   ShowModal;
@@ -180,7 +178,7 @@ var
 begin
 
   if Not DirectoryExists(ConfigDir) then ForceDirectories(ConfigDir);
-  Section := 'PROJECT_LIST\'+ arProjectList[Index].ProjectName;
+  Section := 'PROJECT_LIST\'+ arProjectList[Index].FullProjectName;
 
   INI := TIniFile.Create(FileConfig);
   try
@@ -191,6 +189,7 @@ begin
       WriteString(Section, 'ApiProjUrl', arProjectList[Index].ApiProjectUrl);
       WriteString(Section, 'ApiReleasesUrl', arProjectList[Index].ApiReleasesUrl);
       WriteString(Section, 'ProjectName', arProjectList[Index].ProjectName);
+      WriteString(Section, 'FullProjectName', arProjectList[Index].FullProjectName);
       WriteString(Section, 'AvatarFile', arProjectList[Index].AvatarFile);
       WriteString(Section, 'AvatarUrl',arProjectList[Index].AvatarUrl );
       WriteString(Section, 'Filters', arProjectList[Index].Filters);
@@ -224,6 +223,9 @@ begin
     Exit;
   end;
 
+  if Not AnsiContainsStr(AnsiLowerCase(sEdProjectLink.Text), 'https://') then
+    sEdProjectLink.Text := 'https://' + sEdProjectLink.Text;
+
   // Проверяю что проек уже добавлен в список
   if CheckProjectExistes(sEdProjectLink.Text) then
   begin
@@ -253,18 +255,24 @@ begin
       exit;
     end;
 
-    // Получаю имя проекта; Getting name the project
-    FProjectName := ExtractProjNameFromLink(sEdProjectLink.Text);
-    mm.Lines.Add('Название проекта: ' + FProjectName);
-
-    // Проверяю, что объект JSON создан; Checking that the JSON object is created
-    if RESTResponse.JSONValue = Nil then
+    if RESTResponse.JSONValue.FindValue('name') = Nil then
     begin
-      // ошибка; error ...
-      MessageBox(Handle, PChar('Ошибка: RESTResponse.JSONValue = Nil'),
-                 PChar(CAPTION_MB), MB_ICONERROR);
+      //
       Exit;
     end;
+    // Получаю имя проекта; Getting name the project
+    FProjectName := RESTResponse.JSONValue.FindValue('name').Value;
+
+    if RESTResponse.JSONValue.FindValue('full_name') = Nil then
+    begin
+      //
+      Exit;
+    end;
+    // Получаю полное имя проекта; Getting full name the project
+    FFullName := RESTResponse.JSONValue.FindValue('full_name').Value;
+    // Заменяю символ "/" на "_" ;
+    FFullName := StringReplace(FFullName, '/', '_', [rfReplaceAll, rfIgnoreCase]);
+    mm.Lines.Add('Название проекта: ' + FProjectName);
 
     // Получаю URL аватарки проекта; Getting the avatar URL of the project
     JSONData := RESTResponse.JSONValue.FindValue('owner').FindValue('avatar_url');
@@ -274,7 +282,7 @@ begin
     if sDirEdSaveDir.Text <> '' then
       FProgectDir := sDirEdSaveDir.Text
     else
-      FProgectDir := GLProjectsPath + FProjectName;
+      FProgectDir := GLProjectsPath + FFullName;
     if Not DirectoryExists(FProgectDir) then ForceDirectories(FProgectDir);
 
     // Скачиваю файл аватарки; Downloading avatarka file
@@ -321,7 +329,7 @@ begin
 
     if RESTResponse.JSONValue.FindValue('tag_name') <> nil then
     begin
-      mm.Lines.Add('Имя релиза: ' + RESTResponse.JSONValue.FindValue('name').Value);
+      mm.Lines.Add('Имя релиза: ' + FProjectName);
       FLastReleaseVersion := RESTResponse.JSONValue.FindValue('tag_name').Value;
       FPublishRelease     := RESTResponse.JSONValue.FindValue('published_at').Value;
       mm.Lines.Add('Дата публикации последнего релиза: ' + FPublishRelease);
@@ -337,19 +345,20 @@ begin
   SetLength(arProjectList, Length(arProjectList) + 1);
   with arProjectList[Length(arProjectList) - 1] do
   begin
-    ProjectUrl     := sEdProjectLink.Text;
-    ProjectDir     := FProgectDir;
-    ApiProjectUrl  := FApiProject;
-    ApiReleasesUrl := FApiReleases;
-    ProjectName    := FProjectName;
-    AvatarFile     := FAvatarFileName;
-    AvatarUrl      := FAvatar_url;
-    Filters        := sEdFilter.Text;
-    DatePublish    := FPublishRelease;
-    LastVersion    := FLastReleaseVersion;
-    LastChecked    := Date + Time;
-    RuleDownload   := sRGRuleDownload.ItemIndex;
-    RuleNotis      := sRGRulesNotis.ItemIndex;
+    ProjectUrl      := sEdProjectLink.Text;
+    ProjectDir      := FProgectDir;
+    ApiProjectUrl   := FApiProject;
+    ApiReleasesUrl  := FApiReleases;
+    ProjectName     := FProjectName;
+    FullProjectName := FFullName;
+    AvatarFile      := FAvatarFileName;
+    AvatarUrl       := FAvatar_url;
+    Filters         := sEdFilter.Text;
+    DatePublish     := FPublishRelease;
+    LastVersion     := FLastReleaseVersion;
+    LastChecked     := Date + Time;
+    RuleDownload    := sRGRuleDownload.ItemIndex;
+    RuleNotis       := sRGRulesNotis.ItemIndex;
   end;
 
   SaveAddedNewProject(Length(arProjectList) - 1);

@@ -23,7 +23,7 @@ object FrmMain: TFrmMain
     Left = 8
     Top = 40
     Width = 886
-    Height = 321
+    Height = 361
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -13
@@ -48,7 +48,7 @@ object FrmMain: TFrmMain
       end
       item
         Alignment = taCenter
-        Caption = #1044#1072#1090#1072' '#1088#1077#1083#1080#1079#1072
+        Caption = #1055#1091#1073#1083#1080#1082#1072#1094#1080#1103' '#1088#1077#1083#1080#1079#1072
         MaxWidth = 200
         MinWidth = 100
         Width = 180
@@ -69,6 +69,7 @@ object FrmMain: TFrmMain
     FullDrag = True
     ReadOnly = True
     RowSelect = True
+    PopupMenu = PopupMenu
     SmallImages = ImageListProj
     TabOrder = 0
     ViewStyle = vsReport
@@ -81,6 +82,15 @@ object FrmMain: TFrmMain
     Caption = 'Button1'
     TabOrder = 1
     OnClick = Button1Click
+  end
+  object mmInfo: TsMemo
+    Left = 8
+    Top = 416
+    Width = 881
+    Height = 97
+    ScrollBars = ssVertical
+    TabOrder = 2
+    BoundLabel.ParentFont = False
   end
   object MainMenu: TMainMenu
     Left = 184
@@ -752,5 +762,14 @@ object FrmMain: TFrmMain
   object RESTResponse: TRESTResponse
     Left = 368
     Top = 232
+  end
+  object PopupMenu: TPopupMenu
+    OnPopup = PopupMenuPopup
+    Left = 456
+    Top = 176
+    object PM_DeletProject: TMenuItem
+      Caption = #1059#1076#1072#1083#1080#1090#1100' '#1087#1088#1086#1077#1082#1090
+      OnClick = PM_DeletProjectClick
+    end
   end
 end
