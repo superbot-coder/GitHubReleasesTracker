@@ -2,8 +2,8 @@ object FrmMain: TFrmMain
   Left = 0
   Top = 0
   Caption = 'FrmMain'
-  ClientHeight = 527
-  ClientWidth = 900
+  ClientHeight = 528
+  ClientWidth = 901
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -15,15 +15,15 @@ object FrmMain: TFrmMain
   Position = poScreenCenter
   OnCreate = FormCreate
   DesignSize = (
-    900
-    527)
+    901
+    528)
   PixelsPerInch = 96
   TextHeight = 13
   object sLVProj: TsListView
     Left = 8
-    Top = 40
-    Width = 886
-    Height = 361
+    Top = 16
+    Width = 887
+    Height = 369
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -13
@@ -71,25 +71,19 @@ object FrmMain: TFrmMain
     RowSelect = True
     PopupMenu = PopupMenu
     SmallImages = ImageListProj
+    SortType = stBoth
     TabOrder = 0
     ViewStyle = vsReport
-  end
-  object Button1: TButton
-    Left = 8
-    Top = 8
-    Width = 89
-    Height = 25
-    Caption = 'Button1'
-    TabOrder = 1
-    OnClick = Button1Click
+    OnColumnClick = sLVProjColumnClick
   end
   object mmInfo: TsMemo
     Left = 8
-    Top = 416
+    Top = 400
     Width = 881
-    Height = 97
+    Height = 113
+    Anchors = [akLeft, akRight, akBottom]
     ScrollBars = ssVertical
-    TabOrder = 2
+    TabOrder = 1
     BoundLabel.ParentFont = False
   end
   object MainMenu: TMainMenu

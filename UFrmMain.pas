@@ -9,6 +9,7 @@ uses
   Data.Bind.Components, Data.Bind.ObjectScope, Vcl.StdCtrls, acPNG,
   Vcl.ExtCtrls, acImage, Vcl.Imaging.pngimage, System.IniFiles, sMemo;
 
+type TSortType = (stASC, stDESC);
 type
   TProjectListRec = Record
     ProjectUrl     : string; // Project URL
@@ -41,21 +42,20 @@ type
     RESTClient: TRESTClient;
     RESTRequest: TRESTRequest;
     RESTResponse: TRESTResponse;
-    Button1: TButton;
     PopupMenu: TPopupMenu;
     PM_DeletProject: TMenuItem;
     mmInfo: TsMemo;
     procedure MM_AddReleasesClick(Sender: TObject);
     function AddItems: Integer;
     procedure FormCreate(Sender: TObject);
-    //https://stackoverflow.com/questions/8589096/convert-png-jpg-gif-to-ico
-    function LoadAvatarToImageList(AvatarFile: String): integer;
-    procedure Button1Click(Sender: TObject);
     procedure LoadConfigAndProjectList(LoadConfigType: TLoadConfigsType);
     procedure PopupMenuPopup(Sender: TObject);
     procedure PM_DeletProjectClick(Sender: TObject);
     procedure RemoveProjectFromProjectList(FullProjectName: String);
     procedure ProjectListUpdateVisible;
+    procedure AddLog(StrMsg: String);
+    procedure sLVProjColumnClick(Sender: TObject; Column: TListColumn);
+    function GetWayToSortet(ColumnIndex: UInt8): TSortType;
   private
     { Private declarations }
   public
@@ -86,6 +86,21 @@ implementation
 
 Uses UFrmAddProject, UFrmSettings;
 
+Var
+  ArSortColumnsPos: array[0..4] of TSortType;
+  LastColumnSorted: Byte;
+
+function CustomSortProc(Item1, Item2: TListItem; ParamSort: integer): integer; stdcall;
+begin
+  if ParamSort = 0 then
+    Result := AnsiCompareText(Item1.Caption, Item2.caption)
+  else
+    Result := AnsiCompareText(Item1.SubItems[ParamSort-1], Item2.SubItems[ParamSort-1]);
+
+  if ArSortColumnsPos[ParamSort] = stDESC then Result := Result * -1;
+end;
+
+
 function TFrmMain.AddItems: Integer;
 begin
   with sLVProj.Items.Add do
@@ -100,14 +115,13 @@ begin
   end;
 end;
 
-procedure TFrmMain.Button1Click(Sender: TObject);
-var x: integer;
+procedure TFrmMain.AddLog(StrMsg: String);
 begin
-  x := AddItems;
-  sLVProj.Items[x].ImageIndex := 2;
+  mmInfo.Lines.Add(DateTimeToStr(Date + Time)  + ' ' + StrMsg);
 end;
 
 procedure TFrmMain.FormCreate(Sender: TObject);
+var b: UInt8;
 begin
   Caption  := CAPTION_MB;
   CurrDir  := ExtractFileDir(Application.ExeName);
@@ -119,45 +133,26 @@ begin
   FileConfig     := ConfigDir + '\Config.ini';
   LoadConfigAndProjectList(loadAllConfig);
   ProjectListUpdateVisible;
+  for b := 0 to Length(ArSortColumnsPos) -1 do ArSortColumnsPos[b] := stASC;
 end;
 
-function TFrmMain.LoadAvatarToImageList(AvatarFile: String): integer;
-var
-  Img   : TImage;
-  BmImg : TBitmap;
-  Bmp   : TBitmap;
+function TFrmMain.GetWayToSortet(ColumnIndex: UInt8): TSortType;
+var r: Integer;
 begin
-  Img   := TImage.Create(Owner);
-  BmImg := TBitmap.Create;
-  Bmp   := TBitmap.Create;
-  try
-    Img.Picture.LoadFromFile(AvatarFile);
-    Img.Width  := 32;
-    Img.Height := 32;
-    Img.Stretch := True;
-
-    //BmImg.PixelFormat     := pf32bit;
-    //BmImg.Transparent     := true;
-
-    BmImg.Assign(Img.Picture.Graphic);
-
-    Bmp.PixelFormat      := pf32bit;
-    Bmp.Transparent      := true;
-    Bmp.TransparentColor := clBlack;
-
-    Bmp.SetSize(32, 32);
-
-    SetStretchBltMode(Bmp.Canvas.Handle, HALFTONE);
-    StretchBlt(Bmp.Canvas.Handle, 0, 0, Bmp.Width, Bmp.Height,
-              BmImg.Canvas.Handle, 0, 0, BmImg.Width, BmImg.Height, SRCCOPY);
-
-    Result := ImageListProj.AddMasked(Bmp, clNone);
-
-  finally
-    Img.Free;
-    BmImg.Free;
-    Bmp.Free;
+  with sLVProj do
+  begin
+    if ColumnIndex = 0 then
+      r := AnsiCompareText(Items[0].Caption, Items[1].Caption)
+    else
+      r := AnsiCompareText(Items[0].SubItems[ColumnIndex-1], Items[1].SubItems[ColumnIndex-1]);
   end;
+
+  Case r of
+   -1 : Result := stDESC;
+    0 : Result := stASC;
+    1 : Result := stASC;
+  End;
+
 end;
 
 procedure TFrmMain.LoadConfigAndProjectList(LoadConfigType: TLoadConfigsType);
@@ -305,6 +300,28 @@ begin
        Exit;
     end;
   end;
+end;
+
+procedure TFrmMain.sLVProjColumnClick(Sender: TObject; Column: TListColumn);
+var i: SmallInt;
+begin
+  if sLVProj.Items.Count < 2 then exit;
+
+  {
+  if LastColumnSorted <> Column.Index then
+    ArSortColumnsPos[Column.Index] := stASC;
+  LastColumnSorted := Column.Index;
+  }
+
+  ArSortColumnsPos[Column.Index] := GetWayToSortet(Column.Index);
+
+  sLVProj.CustomSort(@CustomSortProc, Column.Index);
+
+  if ArSortColumnsPos[Column.Index] = stASC then
+    ArSortColumnsPos[Column.Index] := stDESC
+  else
+    ArSortColumnsPos[Column.Index] := stASC;
+
 end;
 
 end.
