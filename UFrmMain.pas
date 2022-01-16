@@ -7,7 +7,8 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.Menus, sSkinManager, Vcl.ComCtrls,
   sListView, System.ImageList, Vcl.ImgList, REST.Types, REST.Client,
   Data.Bind.Components, Data.Bind.ObjectScope, Vcl.StdCtrls, acPNG,
-  Vcl.ExtCtrls, acImage, Vcl.Imaging.pngimage, System.IniFiles, sMemo;
+  Vcl.ExtCtrls, acImage, Vcl.Imaging.pngimage, System.IniFiles, sMemo,
+  RESTContentTypeStr, System.JSON, System.IOUtils, sButton, System.StrUtils;
 
 type TSortType = (stASC, stDESC);
 type
@@ -45,6 +46,9 @@ type
     PopupMenu: TPopupMenu;
     PM_DeletProject: TMenuItem;
     mmInfo: TsMemo;
+    TimerTracker: TTimer;
+    PM_OneProjectTracking: TMenuItem;
+    sBtnTest: TsButton;
     procedure MM_AddReleasesClick(Sender: TObject);
     function AddItems: Integer;
     procedure FormCreate(Sender: TObject);
@@ -56,6 +60,14 @@ type
     procedure AddLog(StrMsg: String);
     procedure sLVProjColumnClick(Sender: TObject; Column: TListColumn);
     function GetWayToSortet(ColumnIndex: UInt8): TSortType;
+    function GetProjectIndex(ProjectName: string): UInt16;
+    procedure TimerTrackerTimer(Sender: TObject);
+    procedure ProjectTracking;
+    procedure OneProjectTracking(ProjectIndex: UInt16);
+    procedure PM_OneProjectTrackingClick(Sender: TObject);
+    procedure sBtnTestClick(Sender: TObject);
+    function ConvertGitHubDataToDataTime(GitDateTime: String): String;
+
   private
     { Private declarations }
   public
@@ -91,12 +103,28 @@ Var
   LastColumnSorted: Byte;
 
 function CustomSortProc(Item1, Item2: TListItem; ParamSort: integer): integer; stdcall;
+var
+  dt1, dt2: TDateTime;
 begin
   if ParamSort = 0 then
     Result := AnsiCompareText(Item1.Caption, Item2.caption)
   else
-    Result := AnsiCompareText(Item1.SubItems[ParamSort-1], Item2.SubItems[ParamSort-1]);
-
+  begin
+    if (ParamSort = 2) or (ParamSort = 3) then
+    begin
+      try
+        dt1 := StrToDateTime(Item1.SubItems[ParamSort-1]);
+        dt2 := StrToDateTime(Item2.SubItems[ParamSort-1]);
+        if dt1 < dt2 then Result := -1;
+        if dt1 > dt2 then Result :=  1;
+        if dt1 = dt2 then Result :=  0;
+      except
+        // no message... ;
+      end;
+    end
+    else
+      Result := AnsiCompareText(Item1.SubItems[ParamSort-1], Item2.SubItems[ParamSort-1]);
+  end;
   if ArSortColumnsPos[ParamSort] = stDESC then Result := Result * -1;
 end;
 
@@ -120,6 +148,39 @@ begin
   mmInfo.Lines.Add(DateTimeToStr(Date + Time)  + ' ' + StrMsg);
 end;
 
+function TFrmMain.ConvertGitHubDataToDataTime(GitDateTime: String): String;
+var
+  s_date, s_time: string;
+  i, pos, len: ShortInt;
+  ST: TStrings;
+begin
+  len := length(GitDateTime);
+  pos := AnsiPos('T', GitDateTime);
+  if pos = -1 then Exit;
+  ST := TStringList.Create;
+  try
+    s_date := Copy(GitDateTime, 1, pos-1);
+    ST.Text := StringReplace(s_date, '-', #13, [rfReplaceAll]);
+    s_date := '';
+    for i:=0 to ST.Count - 1 do
+    begin
+      if i = 0 then
+        s_date := ST.Strings[i] + s_date
+      else
+        s_date := ST.Strings[i] + '.' + s_date;
+    end;
+  finally
+    ST.Free;
+  end;
+  s_time := Copy(GitDateTime, pos + 1, (len-pos)-1 );
+  Result := s_date + ' ' + s_time;
+  { try
+    Result := StrToDateTime(s_date + ' ' + s_time);
+  except
+    // not message...
+  end; }
+end;
+
 procedure TFrmMain.FormCreate(Sender: TObject);
 var b: UInt8;
 begin
@@ -134,6 +195,11 @@ begin
   LoadConfigAndProjectList(loadAllConfig);
   ProjectListUpdateVisible;
   for b := 0 to Length(ArSortColumnsPos) -1 do ArSortColumnsPos[b] := stASC;
+end;
+
+function TFrmMain.GetProjectIndex(ProjectName: string): UInt16;
+begin
+  Result := 0;
 end;
 
 function TFrmMain.GetWayToSortet(ColumnIndex: UInt8): TSortType;
@@ -229,8 +295,86 @@ begin
 
 end;
 
+procedure TFrmMain.OneProjectTracking(ProjectIndex: UInt16);
+var
+  JSONArray    : TJSONArray;
+  tag_name     : string;
+  published_at : string;
+  FileURL      : string;
+  STFilters    : TStrings;
+
+  i: UInt8;
+
+begin
+
+  ShowMessage('OneProjectTracking');
+exit;
+  RESTResponse.RootElement := '[0]';
+  RESTClient.Accept        := arContentTypeStr[ord(ctAPPLICATION_JSON)];
+  RESTClient.BaseURL       := arProjectList[ProjectIndex].ApiReleasesUrl;
+  RESTRequest.Execute;
+
+  if RESTResponse.StatusCode <> 200 then
+  begin
+    // message
+    Exit;
+  end;
+
+  if RESTResponse.JSONValue = Nil then
+  begin
+    // message
+    Exit;
+  end;
+
+  if RESTResponse.JSONValue.FindValue('tag_name') = nil then
+  begin
+    // message
+    exit;
+  end;
+
+  tag_name     := RESTResponse.JSONValue.FindValue('tag_name').Value;
+  published_at := RESTResponse.JSONValue.FindValue('published_at').Value;
+
+  // проверка версии релиза; verifying release version
+
+  // ..............
+  // ..............
+
+  // Получаю массив загруженных файлов; Getting an array of downloaded files
+  JSONArray := RESTResponse.JSONValue.FindValue('assets') as TJSONArray;
+  if JSONArray.Count = 0 then
+  begin
+    // message
+    Exit;
+  end;
+
+  STFilters := TStringList.Create;
+  try
+    for i := 0 to JSONArray.Count -1 do
+    begin
+      FileURL := JSONArray.Items[i].FindValue('browser_download_url').Value;
+      if arProjectList[ProjectIndex].RuleDownload = 0 then
+      begin
+        // Безусловное скачивание
+
+      end
+      else
+      begin
+        // Условное скачивыание, с использованием фильтра
+        STFilters.Clear;
+
+      end;
+    end;
+  finally
+    STFilters.Free;
+  end;
+
+
+
+end;
+
 procedure TFrmMain.PM_DeletProjectClick(Sender: TObject);
-Var 
+Var
   DelProjName: string;
   INI: TIniFile;
 begin
@@ -248,12 +392,26 @@ begin
 
 end;
 
+procedure TFrmMain.PM_OneProjectTrackingClick(Sender: TObject);
+var
+  x: UInt16;
+begin
+  x := GetProjectIndex(sLVProj.Selected.Caption);
+  OneProjectTracking(x);
+end;
+
 procedure TFrmMain.PopupMenuPopup(Sender: TObject);
 begin
-  if (sLVProj.Items.Count = 0) or (sLVProj.SelCount = 0) then 
-    PM_DeletProject.Visible := false
-  else 
-    PM_DeletProject.Visible := true;  
+  if (sLVProj.Items.Count = 0) or (sLVProj.SelCount = 0) then
+  begin
+    PM_DeletProject.Visible       := false;
+    PM_OneProjectTracking.Visible := false;
+  end
+  else
+  begin
+    PM_DeletProject.Visible       := true;
+    PM_OneProjectTracking.Visible := true;
+  end;
 end;
 
 procedure TFrmMain.ProjectListUpdateVisible;
@@ -280,6 +438,26 @@ begin
   sLVProj.Items.EndUpdate;
 end;
 
+procedure TFrmMain.ProjectTracking;
+var
+  i: UInt16;
+  ProjectCount: UInt16;
+begin
+   AddLog('Начало проверки обновлений релизов.');
+   ProjectCount := Length(arProjectList);
+   if ProjectCount = 0 then
+   begin
+     AddLog('Список проектов пуст. проверка завершина');
+     exit;
+   end;
+
+  for i := 0 to ProjectCount -1 do
+  begin
+
+  end;
+
+end;
+
 procedure TFrmMain.RemoveProjectFromProjectList(FullProjectName: String);
 var
   i, ix, len: Word;
@@ -302,6 +480,17 @@ begin
   end;
 end;
 
+procedure TFrmMain.sBtnTestClick(Sender: TObject);
+var
+  s_temp: string;
+  dt: TDateTime;
+begin
+   mmInfo.Lines.Add(DateTimeToStr(Date+Time));
+   // 16.01.2022T14:14:41Z
+   //ConvertGitHubDataToDataTime('2021-06-22T11:06:04Z');
+   //mmInfo.Lines.Add('dt : ' + DateTimeToStr(dt));
+end;
+
 procedure TFrmMain.sLVProjColumnClick(Sender: TObject; Column: TListColumn);
 var i: SmallInt;
 begin
@@ -322,6 +511,11 @@ begin
   else
     ArSortColumnsPos[Column.Index] := stASC;
 
+end;
+
+procedure TFrmMain.TimerTrackerTimer(Sender: TObject);
+begin
+  // .........
 end;
 
 end.

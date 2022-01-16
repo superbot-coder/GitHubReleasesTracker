@@ -23,7 +23,7 @@ object FrmMain: TFrmMain
     Left = 8
     Top = 16
     Width = 887
-    Height = 369
+    Height = 329
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -13
@@ -85,6 +85,15 @@ object FrmMain: TFrmMain
     ScrollBars = ssVertical
     TabOrder = 1
     BoundLabel.ParentFont = False
+  end
+  object sBtnTest: TsButton
+    Left = 16
+    Top = 360
+    Width = 75
+    Height = 25
+    Caption = 'TEST'
+    TabOrder = 2
+    OnClick = sBtnTestClick
   end
   object MainMenu: TMainMenu
     Left = 184
@@ -760,10 +769,20 @@ object FrmMain: TFrmMain
   object PopupMenu: TPopupMenu
     OnPopup = PopupMenuPopup
     Left = 456
-    Top = 176
+    Top = 168
+    object PM_OneProjectTracking: TMenuItem
+      Caption = #1055#1088#1086#1074#1077#1088#1080#1090#1100' '#1086#1073#1085#1086#1074#1083#1077#1085#1080#1077' '#1087#1088#1086#1077#1082#1090#1072
+      OnClick = PM_OneProjectTrackingClick
+    end
     object PM_DeletProject: TMenuItem
       Caption = #1059#1076#1072#1083#1080#1090#1100' '#1087#1088#1086#1077#1082#1090
       OnClick = PM_DeletProjectClick
     end
+  end
+  object TimerTracker: TTimer
+    Interval = 60000
+    OnTimer = TimerTrackerTimer
+    Left = 536
+    Top = 168
   end
 end

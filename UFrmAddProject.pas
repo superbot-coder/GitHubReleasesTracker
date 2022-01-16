@@ -7,7 +7,7 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, sSkinProvider, Vcl.StdCtrls, sEdit,
   sButton, sGroupBox, sCheckBox, Vcl.Mask, sMaskEdit, sCustomComboEdit,
   sToolEdit, sLabel, Vcl.ComCtrls, sListView, sListBox, System.ImageList,
-  Vcl.ImgList, json,System.IOUtils, REST.Types, RESTContentTypeStr, StrUtils,
+  Vcl.ImgList, json, System.IOUtils, REST.Types, RESTContentTypeStr, StrUtils,
   Vcl.ExtCtrls, acImage, acPNG, sPanel, System.IniFiles, sMemo;
 
 type
@@ -78,9 +78,6 @@ function TFrmAddProject.CheckProjectExistes(URL: String): boolean;
 var i: SmallInt;
 begin
   Result := False;
-
-
-
   for i := 0 to Length(arProjectList)-1 do
   begin
     if arProjectList[i].ProjectUrl = URL then
@@ -240,7 +237,6 @@ begin
 
   with FrmMain do
   begin
-
     // проверка правильная ссылки; Check Existes the project
     RESTResponse.RootElement := '';
     RESTClient.Accept        := arContentTypeStr[ord(ctAPPLICATION_JSON)];
@@ -298,11 +294,8 @@ begin
       // Пoлучаю имя файла для сохранения аватарки
       // Getting the file name to save the avatar
       FAvatarFileName := FProgectDir + '\Avatar' + ext;
-      // [-] Временно скачиваю аватарку в "TEMP"; Temporarily download the avatark to "TEMP"
-      // [-] FAvatarFileNameTemp := TEMP + '\' + 'Avatar_' + FProjectName + ext;
       TFile.WriteAllBytes(FAvatarFileName, RESTResponse.RawBytes);
       sImagProject.Picture.LoadFromFile(FAvatarFileName);
-
     end;
 
     // Проверяю существуют ли релизы; Checking if releases exist
@@ -332,6 +325,7 @@ begin
       mm.Lines.Add('Имя релиза: ' + FProjectName);
       FLastReleaseVersion := RESTResponse.JSONValue.FindValue('tag_name').Value;
       FPublishRelease     := RESTResponse.JSONValue.FindValue('published_at').Value;
+      FPublishRelease     := ConvertGitHubDataToDataTime(FPublishRelease);
       mm.Lines.Add('Дата публикации последнего релиза: ' + FPublishRelease);
       mm.Lines.Add('Версия последнего релиза: ' + FLastReleaseVersion);
       mm.Lines.Add('Проверка выполнена.');
