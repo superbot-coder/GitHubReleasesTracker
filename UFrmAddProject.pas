@@ -40,17 +40,17 @@ type
     function CheckProjectExistes(URL: String): boolean;
   private
     { Private declarations }
-    FApiProject         : String;
+    FApiProject         : string;
     FApiReleases        : string;
     FProjectName        : string;
     FFullName           : string;
     FAvatar_url         : string;
     FProgectDir         : string;
-    FAvatarFileName     : String;
-    FLastReleaseVersion : String;
+    FAvatarFileName     : string;
+    FLastReleaseVersion : string;
     FProjChecked        : Boolean;
-    FPublishRelease     : String;
-
+    FPublishRelease     : string;
+    FLanguage           : string;
   public
     { Public declarations }
     Applay: Boolean;
@@ -191,6 +191,7 @@ begin
       WriteString(Section, 'AvatarUrl',arProjectList[Index].AvatarUrl );
       WriteString(Section, 'Filters', arProjectList[Index].Filters);
       WriteString(Section, 'DatePublish', arProjectList[Index].DatePublish);
+      WriteString(Section, 'Language', arProjectList[Index].Language);
       WriteString(Section, 'LastVersion', arProjectList[Index].LastVersion);
       WriteDateTime(Section, 'LastChecked', arProjectList[Index].LastChecked);
       WriteInteger(Section, 'RuleDownload', arProjectList[Index].RuleDownload);
@@ -274,6 +275,9 @@ begin
     JSONData := RESTResponse.JSONValue.FindValue('owner').FindValue('avatar_url');
     if JSONData <> Nil then FAvatar_url := JSONData.Value;
 
+    // получаю язык программирования проекта; getting the project programming language
+    FLanguage := RESTResponse.JSONValue.FindValue('language').Value;
+
     // Получаю директорию проекта; Getting the project directory
     if sDirEdSaveDir.Text <> '' then
       FProgectDir := sDirEdSaveDir.Text
@@ -325,12 +329,11 @@ begin
       mm.Lines.Add('Имя релиза: ' + FProjectName);
       FLastReleaseVersion := RESTResponse.JSONValue.FindValue('tag_name').Value;
       FPublishRelease     := RESTResponse.JSONValue.FindValue('published_at').Value;
-      FPublishRelease     := ConvertGitHubDataToDataTime(FPublishRelease);
+      FPublishRelease     := ConvertGitHubDateToDateTime(FPublishRelease);
       mm.Lines.Add('Дата публикации последнего релиза: ' + FPublishRelease);
       mm.Lines.Add('Версия последнего релиза: ' + FLastReleaseVersion);
       mm.Lines.Add('Проверка выполнена.');
-      MessageBox(Handle, PChar(mm.Lines.Text),
-                 PChar(CAPTION_MB), MB_ICONINFORMATION);
+      MessageBox(Handle, PChar(mm.Lines.Text), PChar(CAPTION_MB), MB_ICONINFORMATION);
     end;
   end;
 
@@ -349,6 +352,7 @@ begin
     AvatarUrl       := FAvatar_url;
     Filters         := sEdFilter.Text;
     DatePublish     := FPublishRelease;
+    Language        := FLanguage;
     LastVersion     := FLastReleaseVersion;
     LastChecked     := Date + Time;
     RuleDownload    := sRGRuleDownload.ItemIndex;
@@ -360,7 +364,6 @@ begin
   Applay := true;
   sBtnApply.Enabled := true;
   Close;
-
 end;
 
 procedure TFrmAddProject.sEdProjectLinkChange(Sender: TObject);

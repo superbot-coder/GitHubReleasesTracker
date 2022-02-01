@@ -2,8 +2,8 @@ object FrmMain: TFrmMain
   Left = 0
   Top = 0
   Caption = 'FrmMain'
-  ClientHeight = 528
-  ClientWidth = 901
+  ClientHeight = 619
+  ClientWidth = 1066
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -15,15 +15,15 @@ object FrmMain: TFrmMain
   Position = poScreenCenter
   OnCreate = FormCreate
   DesignSize = (
-    901
-    528)
+    1066
+    619)
   PixelsPerInch = 96
   TextHeight = 13
   object sLVProj: TsListView
     Left = 8
     Top = 16
-    Width = 887
-    Height = 329
+    Width = 1052
+    Height = 420
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -13
@@ -61,6 +61,13 @@ object FrmMain: TFrmMain
         Width = 180
       end
       item
+        Alignment = taCenter
+        Caption = #1071#1079#1099#1082
+        MaxWidth = 300
+        MinWidth = 50
+        Width = 150
+      end
+      item
         Caption = 'URL '#1055#1088#1086#1077#1082#1090#1072
         MaxWidth = 600
         MinWidth = 100
@@ -75,20 +82,24 @@ object FrmMain: TFrmMain
     TabOrder = 0
     ViewStyle = vsReport
     OnColumnClick = sLVProjColumnClick
+    ExplicitWidth = 887
+    ExplicitHeight = 329
   end
   object mmInfo: TsMemo
     Left = 8
-    Top = 400
-    Width = 881
+    Top = 491
+    Width = 1046
     Height = 113
     Anchors = [akLeft, akRight, akBottom]
     ScrollBars = ssVertical
     TabOrder = 1
     BoundLabel.ParentFont = False
+    ExplicitTop = 400
+    ExplicitWidth = 881
   end
   object sBtnTest: TsButton
     Left = 16
-    Top = 360
+    Top = 448
     Width = 75
     Height = 25
     Caption = 'TEST'
@@ -770,9 +781,9 @@ object FrmMain: TFrmMain
     OnPopup = PopupMenuPopup
     Left = 456
     Top = 168
-    object PM_OneProjectTracking: TMenuItem
+    object PM_OneProjectCheck: TMenuItem
       Caption = #1055#1088#1086#1074#1077#1088#1080#1090#1100' '#1086#1073#1085#1086#1074#1083#1077#1085#1080#1077' '#1087#1088#1086#1077#1082#1090#1072
-      OnClick = PM_OneProjectTrackingClick
+      OnClick = PM_OneProjectCheckClick
     end
     object PM_DeletProject: TMenuItem
       Caption = #1059#1076#1072#1083#1080#1090#1100' '#1087#1088#1086#1077#1082#1090

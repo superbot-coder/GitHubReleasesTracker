@@ -8,7 +8,8 @@ uses
   sListView, System.ImageList, Vcl.ImgList, REST.Types, REST.Client,
   Data.Bind.Components, Data.Bind.ObjectScope, Vcl.StdCtrls, acPNG,
   Vcl.ExtCtrls, acImage, Vcl.Imaging.pngimage, System.IniFiles, sMemo,
-  RESTContentTypeStr, System.JSON, System.IOUtils, sButton, System.StrUtils;
+  RESTContentTypeStr, System.JSON, System.IOUtils, sButton, System.StrUtils,
+  System.DateUtils;
 
 type TSortType = (stASC, stDESC);
 type
@@ -23,6 +24,7 @@ type
     AvatarUrl      : string;
     Filters        : string;
     DatePublish    : string;
+    Language       : string;
     LastVersion    : string;
     LastChecked    : TDateTime;
     RuleDownload   : UInt8;
@@ -47,7 +49,7 @@ type
     PM_DeletProject: TMenuItem;
     mmInfo: TsMemo;
     TimerTracker: TTimer;
-    PM_OneProjectTracking: TMenuItem;
+    PM_OneProjectCheck: TMenuItem;
     sBtnTest: TsButton;
     procedure MM_AddReleasesClick(Sender: TObject);
     function AddItems: Integer;
@@ -63,10 +65,10 @@ type
     function GetProjectIndex(ProjectName: string): UInt16;
     procedure TimerTrackerTimer(Sender: TObject);
     procedure ProjectTracking;
-    procedure OneProjectTracking(ProjectIndex: UInt16);
-    procedure PM_OneProjectTrackingClick(Sender: TObject);
+    procedure OneProjectCheck(ProjectIndex: UInt16);
+    procedure PM_OneProjectCheckClick(Sender: TObject);
     procedure sBtnTestClick(Sender: TObject);
-    function ConvertGitHubDataToDataTime(GitDateTime: String): String;
+    function ConvertGitHubDateToDateTime(GitDateTime: String): String;
 
   private
     { Private declarations }
@@ -75,21 +77,23 @@ type
   end;
 
 var
-  FrmMain    : TFrmMain;
-  CurrDir    : String;
-  CurrPath   : String;
-  TEMP       : String;
-  ConfigDir  : String;
-  FileConfig : string;
+  FrmMain        : TFrmMain;
+  CurrDir        : string;
+  CurrPath       : string;
+  TEMP           : string;
+  ConfigDir      : string;
+  FileConfig     : string;
   GLProjectsPath : String;
   arProjectList  : array of TProjectListRec;
+  GMT            : ShortInt; // Часовой пояс
 
 Const
   CAPTION_MB = 'GitHub Releases Tracker';
   lv_proj_version     = 0;
   lv_date_publish     = 1;
   lv_date_last_check  = 2;
-  lv_project_url      = 3;
+  lv_Language         = 3;
+  lv_project_url      = 4;
   // ALL_PROJECT_DIR = 'GitHubReleasesTracker';
 
 implementation
@@ -99,7 +103,7 @@ implementation
 Uses UFrmAddProject, UFrmSettings;
 
 Var
-  ArSortColumnsPos: array[0..4] of TSortType;
+  ArSortColumnsPos: array[0..5] of TSortType;
   LastColumnSorted: Byte;
 
 function CustomSortProc(Item1, Item2: TListItem; ParamSort: integer): integer; stdcall;
@@ -130,16 +134,14 @@ end;
 
 
 function TFrmMain.AddItems: Integer;
+var i: byte;
 begin
   with sLVProj.Items.Add do
   begin
     Caption := ''; IntToStr(Index + 1);
     Result  := Index;
     ImageIndex := 0;
-    SubItems.Add('');
-    SubItems.Add('');
-    SubItems.Add('');
-    SubItems.Add('');
+    for i := 1 to 5 do SubItems.Add('');
   end;
 end;
 
@@ -148,42 +150,25 @@ begin
   mmInfo.Lines.Add(DateTimeToStr(Date + Time)  + ' ' + StrMsg);
 end;
 
-function TFrmMain.ConvertGitHubDataToDataTime(GitDateTime: String): String;
+function TFrmMain.ConvertGitHubDateToDateTime(GitDateTime: String): String;
 var
-  s_date, s_time: string;
-  i, pos, len: ShortInt;
-  ST: TStrings;
+  fs: TFormatSettings;
 begin
-  len := length(GitDateTime);
-  pos := AnsiPos('T', GitDateTime);
-  if pos = -1 then Exit;
-  ST := TStringList.Create;
-  try
-    s_date := Copy(GitDateTime, 1, pos-1);
-    ST.Text := StringReplace(s_date, '-', #13, [rfReplaceAll]);
-    s_date := '';
-    for i:=0 to ST.Count - 1 do
-    begin
-      if i = 0 then
-        s_date := ST.Strings[i] + s_date
-      else
-        s_date := ST.Strings[i] + '.' + s_date;
-    end;
-  finally
-    ST.Free;
-  end;
-  s_time := Copy(GitDateTime, pos + 1, (len-pos)-1 );
-  Result := s_date + ' ' + s_time;
-  { try
-    Result := StrToDateTime(s_date + ' ' + s_time);
-  except
-    // not message...
-  end; }
+  fs.ShortDateFormat := 'YYYY-MM-DD';
+  fs.ShortTimeFormat := 'HH:MM:SS';
+  fs.DateSeparator   := '-';
+  fs.TimeSeparator   := ':';
+  //gдобальное нелокализованое время; global non-localized time
+  Result := DateTimeToStr(StrToDateTime(GitDateTime, fs));
 end;
 
 procedure TFrmMain.FormCreate(Sender: TObject);
-var b: UInt8;
+var
+  b: UInt8;
+  tz: TTimeZoneInformation;
 begin
+  GetTimeZoneInformation(tz);
+  GMT := tz.Bias div -60;
   Caption  := CAPTION_MB;
   CurrDir  := ExtractFileDir(Application.ExeName);
   CurrPath := CurrDir + PathDelim;
@@ -203,22 +188,39 @@ begin
 end;
 
 function TFrmMain.GetWayToSortet(ColumnIndex: UInt8): TSortType;
-var r: Integer;
+// Функция определяет направление сортировки
+// The function determines the direction of sorting
+var
+  r, x: Integer;
 begin
+  r := 0;
+  x := 1;
   with sLVProj do
   begin
     if ColumnIndex = 0 then
-      r := AnsiCompareText(Items[0].Caption, Items[1].Caption)
-    else
-      r := AnsiCompareText(Items[0].SubItems[ColumnIndex-1], Items[1].SubItems[ColumnIndex-1]);
+    begin
+      while (x < sLVProj.Items.Count-1) do
+      begin
+        r := AnsiCompareText(Items[0].Caption, Items[x].Caption);
+        if r <> 0 then Break;
+        inc(x);
+      end;
+    end
+      else
+    begin
+      while (x < sLVProj.Items.Count) do
+      begin
+        r := AnsiCompareText(Items[0].SubItems[ColumnIndex-1], Items[x].SubItems[ColumnIndex-1]);
+        if r <> 0 then Break;
+        Inc(x);
+      end;
+    end;
   end;
-
   Case r of
    -1 : Result := stDESC;
     0 : Result := stASC;
     1 : Result := stASC;
   End;
-
 end;
 
 procedure TFrmMain.LoadConfigAndProjectList(LoadConfigType: TLoadConfigsType);
@@ -262,6 +264,7 @@ begin
         AvatarUrl       := INI.ReadString(SubSection, 'AvatarUrl','');
         Filters         := INI.ReadString(SubSection, 'Filters','');
         DatePublish     := INI.ReadString(SubSection, 'DatePublish','');
+        Language        := INI.ReadString(SubSection, 'Language','');
         LastVersion     := INI.ReadString(SubSection, 'LastVersion','');
         LastChecked     := INI.ReadDateTime(SubSection, 'LastChecked', 0);
         RuleDownload    := INI.ReadInteger(SubSection, 'RuleDownload', 0);
@@ -281,7 +284,6 @@ var
 begin
   FrmAddProject.FrmShowInit;
   if Not FrmAddProject.Applay then Exit;
-
   i := Length(arProjectList)-1;
   x := AddItems;
   with sLVProj.Items[x] do
@@ -290,21 +292,19 @@ begin
     SubItems[lv_proj_version]    := arProjectList[i].LastVersion;
     SubItems[lv_date_publish]    := arProjectList[i].DatePublish;
     SubItems[lv_date_last_check] := DateTimeToStr(arProjectList[i].LastChecked);
+    SubItems[lv_Language]        := arProjectList[i].Language;
     SubItems[lv_project_url]     := arProjectList[i].ProjectUrl;
   end;
-
 end;
 
-procedure TFrmMain.OneProjectTracking(ProjectIndex: UInt16);
+procedure TFrmMain.OneProjectCheck(ProjectIndex: UInt16);
 var
   JSONArray    : TJSONArray;
   tag_name     : string;
   published_at : string;
   FileURL      : string;
   STFilters    : TStrings;
-
   i: UInt8;
-
 begin
 
   ShowMessage('OneProjectTracking');
@@ -392,31 +392,32 @@ begin
 
 end;
 
-procedure TFrmMain.PM_OneProjectTrackingClick(Sender: TObject);
+procedure TFrmMain.PM_OneProjectCheckClick(Sender: TObject);
 var
   x: UInt16;
 begin
   x := GetProjectIndex(sLVProj.Selected.Caption);
-  OneProjectTracking(x);
+  OneProjectCheck(x);
 end;
 
 procedure TFrmMain.PopupMenuPopup(Sender: TObject);
 begin
   if (sLVProj.Items.Count = 0) or (sLVProj.SelCount = 0) then
   begin
-    PM_DeletProject.Visible       := false;
-    PM_OneProjectTracking.Visible := false;
+    PM_DeletProject.Visible    := false;
+    PM_OneProjectCheck.Visible := false;
   end
   else
   begin
-    PM_DeletProject.Visible       := true;
-    PM_OneProjectTracking.Visible := true;
+    PM_DeletProject.Visible    := true;
+    PM_OneProjectCheck.Visible := true;
   end;
 end;
 
 procedure TFrmMain.ProjectListUpdateVisible;
 var
   i, x, len: Word;
+  dtl: TDateTime; //localized  date time
 begin
   sLVProj.Items.Clear;
   len := Length(arProjectList);
@@ -430,8 +431,13 @@ begin
     begin
       Caption                      := arProjectList[i].FullProjectName;
       SubItems[lv_proj_version]    := arProjectList[i].LastVersion;
-      SubItems[lv_date_publish]    := arProjectList[i].DatePublish;
+      // Получаю локализованую дату и время; Getting localized date time
+      if arProjectList[i].DatePublish <> '' then
+        dtl := IncHour(StrToDateTime(arProjectList[i].DatePublish), GMT);
+      SubItems[lv_date_publish]    := DateTimeToStr(dtl);
+      //SubItems[lv_date_publish]    := arProjectList[i].DatePublish; // No GMT
       SubItems[lv_date_last_check] := DateTimeToStr(arProjectList[i].LastChecked);
+      SubItems[lv_Language]        := arProjectList[i].Language;
       SubItems[lv_project_url]     := arProjectList[i].ProjectUrl;
     end;
   end;
@@ -453,7 +459,7 @@ begin
 
   for i := 0 to ProjectCount -1 do
   begin
-
+    //....................
   end;
 
 end;
@@ -482,13 +488,35 @@ end;
 
 procedure TFrmMain.sBtnTestClick(Sender: TObject);
 var
-  s_temp: string;
-  dt: TDateTime;
+  s: string;
+  tz: TTimeZoneInformation;
+  fs: TFormatSettings;
+  dt:  TDateTime; // пдобальное нелокализованое время
+  dtl: TDateTime; // локализованное время с учетом часового пояса
+  GMT: ShortInt;
 begin
-   mmInfo.Lines.Add(DateTimeToStr(Date+Time));
-   // 16.01.2022T14:14:41Z
-   //ConvertGitHubDataToDataTime('2021-06-22T11:06:04Z');
-   //mmInfo.Lines.Add('dt : ' + DateTimeToStr(dt));
+
+   GetTimeZoneInformation(tz);
+   GMT := tz.Bias div -60;
+   mmInfo.Lines.Add('GMT ' + IntToStr(GMT));
+   mmInfo.Lines.Add(tz.StandardName);
+   mmInfo.Lines.Add(tz.DaylightName);
+   mmInfo.Lines.Add('GMT ' + IntToStr(tz.DaylightBias div -60 ));
+
+
+   // YYYY-MM-DDTHH:MM:SSZ '2021-06-22T11:06:04Z'
+   fs.ShortDateFormat := 'YYYY-MM-DD';
+   fs.ShortTimeFormat := 'HH:MM:SS';
+   fs.DateSeparator  := '-';
+   fs.TimeSeparator  := ':';
+   dt  := StrToDateTime('2021-06-22T11:06:04Z', fs);
+   dtl := IncHour(dt, GMT);
+
+   mmInfo.Lines.Add('dt: ' +DateTimeToStr(dt) + ' dtl: ' + DateTimeToStr(dtl));
+
+   s := ConvertGitHubDateToDateTime('2021-06-22T11:06:04Z');
+   mmInfo.Lines.Add('DateTime : ' + s);
+
 end;
 
 procedure TFrmMain.sLVProjColumnClick(Sender: TObject; Column: TListColumn);
@@ -502,6 +530,8 @@ begin
   LastColumnSorted := Column.Index;
   }
 
+  // Функция GetWayToSortet() определяет направление сортировки
+  // The function GetWayToSortet() determines the direction of sorting
   ArSortColumnsPos[Column.Index] := GetWayToSortet(Column.Index);
 
   sLVProj.CustomSort(@CustomSortProc, Column.Index);

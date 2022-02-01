@@ -3,7 +3,7 @@ object FrmAddProject: TFrmAddProject
   Top = 0
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
-  Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1085#1086#1074#1099' '#1087#1088#1086#1077#1082#1090
+  Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1085#1086#1074#1099#1081' '#1087#1088#1086#1077#1082#1090
   ClientHeight = 483
   ClientWidth = 585
   Color = clBtnFace
@@ -65,8 +65,8 @@ object FrmAddProject: TFrmAddProject
     Height = 21
     MaxLength = 255
     TabOrder = 2
-    Text = ''
     CheckOnExit = True
+    Text = ''
     Root = 'rfDesktop'
   end
   object sChBoxSubDir: TsCheckBox
