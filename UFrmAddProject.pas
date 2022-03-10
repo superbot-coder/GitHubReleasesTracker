@@ -4,40 +4,40 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, sSkinProvider, Vcl.StdCtrls, sEdit,
-  sButton, sGroupBox, sCheckBox, Vcl.Mask, sMaskEdit, sCustomComboEdit,
-  sToolEdit, sLabel, Vcl.ComCtrls, sListView, sListBox, System.ImageList,
-  Vcl.ImgList, json, System.IOUtils, REST.Types, RESTContentTypeStr, StrUtils,
-  Vcl.ExtCtrls, acImage, acPNG, sPanel, System.IniFiles, sMemo;
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Mask,
+  Vcl.ComCtrls, System.ImageList, Vcl.ImgList, json, System.IOUtils,
+  REST.Types, RESTContentTypeStr, StrUtils,
+  Vcl.ExtCtrls, System.IniFiles, Vcl.Buttons, Vcl.FileCtrl;
 
 type
   TFrmAddProject = class(TForm)
-    sSkinProvider: TsSkinProvider;
-    sBtnApply: TsButton;
-    sLblPojectLink: TsLabel;
-    sDirEdSaveDir: TsDirectoryEdit;
-    sLblProjectDir: TsLabel;
-    sChBoxSubDir: TsCheckBox;
-    sRGRulesNotis: TsRadioGroup;
-    sRGRuleDownload: TsRadioGroup;
-    sEdFilter: TsEdit;
-    sLblFilter: TsLabel;
-    sEdProjectLink: TsEdit;
-    sImagProject: TsImage;
-    sLblAvatar: TsLabel;
-    sPnlImage: TsPanel;
-    sChBoxDownloadLastRelease: TsCheckBox;
-    mm: TsMemo;
-    procedure sBtnApplyClick(Sender: TObject);
+    edProjectLink: TEdit;
+    LblUrlProject: TLabel;
+    statTextProjectDir: TStaticText;
+    ChBoxSubDir: TCheckBox;
+    ChBoxDownloadLastRelease: TCheckBox;
+    LblFilter: TLabel;
+    EdFilter: TEdit;
+    mm: TMemo;
+    Panel: TPanel;
+    ImagProject: TImage;
+    LblAvatar: TLabel;
+    BtnApply: TButton;
+    SpeedButton1: TSpeedButton;
+    edSaveDir: TEdit;
+    RGRulesNotis: TRadioGroup;
+    RGRuleDownload: TRadioGroup;
+    procedure BtnApplyClick(Sender: TObject);
     function ConverLinkToApiLink(Link: String): String;
     Procedure AddProjectList;
     procedure FrmShowInit;
     function ExtractProjNameFromLink(URL: String): String;
     function ExcludeTrailingURLDelimiter(URL: String): String;
     function GetImageExtention(ContentType: string): String;
-    procedure sEdProjectLinkChange(Sender: TObject);
+    procedure edProjectLinkChange(Sender: TObject);
     procedure SaveAddedNewProject(Index: Integer);
     function CheckProjectExistes(URL: String): boolean;
+    procedure SpeedButton1Click(Sender: TObject);
   private
     { Private declarations }
     FApiProject         : string;
@@ -125,15 +125,15 @@ end;
 procedure TFrmAddProject.FrmShowInit;
 begin
   // init controls
-  sEdProjectLink.Text       := '';
-  //sEdFilter.Text          := '';
-  sDirEdSaveDir.Text        := '';
-  sBtnApply.Enabled         := False;
-  sRGRuleDownload.ItemIndex := 0;
-  sRGRulesNotis.ItemIndex   := 0;
-  sChBoxSubDir.Checked      := True;
-  sChBoxDownloadLastRelease.Checked := false;
-  sImagProject.Picture      := Nil;
+  edProjectLink.Text       := '';
+  //sEdFilter.Text         := '';
+  edSaveDir.Text           := '';
+  BtnApply.Enabled         := False;
+  RGRuleDownload.ItemIndex := 0;
+  RGRulesNotis.ItemIndex   := 0;
+  ChBoxSubDir.Checked      := True;
+  ChBoxDownloadLastRelease.Checked := false;
+  ImagProject.Picture      := Nil;
   mm.Clear;
 
   // init values
@@ -203,37 +203,45 @@ begin
   end;
 end;
 
-procedure TFrmAddProject.sBtnApplyClick(Sender: TObject);
+procedure TFrmAddProject.SpeedButton1Click(Sender: TObject);
+var
+  SelDir: String;
+begin
+  SelectDirectory('Выберите каталог', '', SelDir);
+  edSaveDir.Text := SelDir;
+end;
+
+procedure TFrmAddProject.BtnApplyClick(Sender: TObject);
 var
   JSONData : TJSONValue;
   ext      : string;
   x        : SmallInt;
 begin
 
-  sBtnApply.Enabled := false;
+  BtnApply.Enabled := false;
 
-  if sEdProjectLink.Text = '' then sEdProjectLink.Text := test_url;
+  if edProjectLink.Text = '' then edProjectLink.Text := test_url;
 
-  if sEdProjectLink.Text = '' then
+  if edProjectLink.Text = '' then
   begin
     MessageBox(Handle, PChar('Введите ссылку на проект'),
                PChar(CAPTION_MB), MB_ICONWARNING);
     Exit;
   end;
 
-  if Not AnsiContainsStr(AnsiLowerCase(sEdProjectLink.Text), 'https://') then
-    sEdProjectLink.Text := 'https://' + sEdProjectLink.Text;
+  if Not AnsiContainsStr(AnsiLowerCase(edProjectLink.Text), 'https://') then
+    edProjectLink.Text := 'https://' + edProjectLink.Text;
 
   // Проверяю что проек уже добавлен в список
-  if CheckProjectExistes(sEdProjectLink.Text) then
+  if CheckProjectExistes(edProjectLink.Text) then
   begin
     MessageBox(Handle, PChar('Такой проек уже добавлен в список..'),
                PChar(CAPTION_MB), MB_ICONWARNING);
     Exit;
   end;
 
-  sEdProjectLink.Text := ExcludeTrailingURLDelimiter(Trim(sEdProjectLink.Text));
-  FApiProject         := ConverLinkToApiLink(sEdProjectLink.Text);
+  edProjectLink.Text := ExcludeTrailingURLDelimiter(Trim(edProjectLink.Text));
+  FApiProject         := ConverLinkToApiLink(edProjectLink.Text);
   FApiReleases        := FApiProject + '/releases';
 
   with FrmMain do
@@ -279,8 +287,8 @@ begin
     FLanguage := RESTResponse.JSONValue.FindValue('language').Value;
 
     // Получаю директорию проекта; Getting the project directory
-    if sDirEdSaveDir.Text <> '' then
-      FProgectDir := sDirEdSaveDir.Text
+    if edSaveDir.Text <> '' then
+      FProgectDir := edSaveDir.Text
     else
       FProgectDir := GLProjectsPath + FFullName;
     if Not DirectoryExists(FProgectDir) then ForceDirectories(FProgectDir);
@@ -299,7 +307,7 @@ begin
       // Getting the file name to save the avatar
       FAvatarFileName := FProgectDir + '\Avatar' + ext;
       TFile.WriteAllBytes(FAvatarFileName, RESTResponse.RawBytes);
-      sImagProject.Picture.LoadFromFile(FAvatarFileName);
+      ImagProject.Picture.LoadFromFile(FAvatarFileName);
     end;
 
     // Проверяю существуют ли релизы; Checking if releases exist
@@ -342,7 +350,7 @@ begin
   SetLength(arProjectList, Length(arProjectList) + 1);
   with arProjectList[Length(arProjectList) - 1] do
   begin
-    ProjectUrl      := sEdProjectLink.Text;
+    ProjectUrl      := edProjectLink.Text;
     ProjectDir      := FProgectDir;
     ApiProjectUrl   := FApiProject;
     ApiReleasesUrl  := FApiReleases;
@@ -350,25 +358,25 @@ begin
     FullProjectName := FFullName;
     AvatarFile      := FAvatarFileName;
     AvatarUrl       := FAvatar_url;
-    Filters         := sEdFilter.Text;
+    Filters         := EdFilter.Text;
     DatePublish     := FPublishRelease;
     Language        := FLanguage;
     LastVersion     := FLastReleaseVersion;
     LastChecked     := Date + Time;
-    RuleDownload    := sRGRuleDownload.ItemIndex;
-    RuleNotis       := sRGRulesNotis.ItemIndex;
+    RuleDownload    := RGRuleDownload.ItemIndex;
+    RuleNotis       := RGRulesNotis.ItemIndex;
   end;
 
   SaveAddedNewProject(Length(arProjectList) - 1);
 
   Applay := true;
-  sBtnApply.Enabled := true;
+  BtnApply.Enabled := true;
   Close;
 end;
 
-procedure TFrmAddProject.sEdProjectLinkChange(Sender: TObject);
+procedure TFrmAddProject.edProjectLinkChange(Sender: TObject);
 begin
-  sBtnApply.Enabled := true;
+  BtnApply.Enabled := true;
 end;
 
 end.

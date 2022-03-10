@@ -4,12 +4,12 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.Menus, sSkinManager, Vcl.ComCtrls,
-  sListView, System.ImageList, Vcl.ImgList, REST.Types, REST.Client,
-  Data.Bind.Components, Data.Bind.ObjectScope, Vcl.StdCtrls, acPNG,
-  Vcl.ExtCtrls, acImage, Vcl.Imaging.pngimage, System.IniFiles, sMemo,
-  RESTContentTypeStr, System.JSON, System.IOUtils, sButton, System.StrUtils,
-  System.DateUtils;
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.Menus, Vcl.ComCtrls,
+  System.ImageList, Vcl.ImgList, REST.Types, REST.Client,
+  Data.Bind.Components, Data.Bind.ObjectScope, Vcl.StdCtrls,
+  Vcl.ExtCtrls, Vcl.Imaging.pngimage, System.IniFiles,
+  RESTContentTypeStr, System.JSON, System.IOUtils, System.StrUtils,
+  System.DateUtils, Vcl.Mask;
 
 type TSortType = (stASC, stDESC);
 type
@@ -39,18 +39,19 @@ type
     MainMenu: TMainMenu;
     U1: TMenuItem;
     MM_AddReleases: TMenuItem;
-    sSkinManager: TsSkinManager;
-    sLVProj: TsListView;
     ImageListProj: TImageList;
     RESTClient: TRESTClient;
     RESTRequest: TRESTRequest;
     RESTResponse: TRESTResponse;
     PopupMenu: TPopupMenu;
     PM_DeletProject: TMenuItem;
-    mmInfo: TsMemo;
     TimerTracker: TTimer;
     PM_OneProjectCheck: TMenuItem;
-    sBtnTest: TsButton;
+    cbxVclStyles: TComboBox;
+    LVProj: TListView;
+    Label1: TLabel;
+    mmInfo: TMemo;
+    BtnTest: TButton;
     procedure MM_AddReleasesClick(Sender: TObject);
     function AddItems: Integer;
     procedure FormCreate(Sender: TObject);
@@ -60,15 +61,16 @@ type
     procedure RemoveProjectFromProjectList(FullProjectName: String);
     procedure ProjectListUpdateVisible;
     procedure AddLog(StrMsg: String);
-    procedure sLVProjColumnClick(Sender: TObject; Column: TListColumn);
+    procedure LVProjColumnClick(Sender: TObject; Column: TListColumn);
     function GetWayToSortet(ColumnIndex: UInt8): TSortType;
     function GetProjectIndex(ProjectName: string): UInt16;
     procedure TimerTrackerTimer(Sender: TObject);
     procedure ProjectTracking;
     procedure OneProjectCheck(ProjectIndex: UInt16);
     procedure PM_OneProjectCheckClick(Sender: TObject);
-    procedure sBtnTestClick(Sender: TObject);
+    procedure BtnTestClick(Sender: TObject);
     function ConvertGitHubDateToDateTime(GitDateTime: String): String;
+    procedure cbxVclStylesChange(Sender: TObject);
 
   private
     { Private declarations }
@@ -100,7 +102,7 @@ implementation
 
 {$R *.dfm}
 
-Uses UFrmAddProject, UFrmSettings;
+Uses Vcl.Themes, UFrmAddProject, UFrmSettings;
 
 Var
   ArSortColumnsPos: array[0..5] of TSortType;
@@ -136,7 +138,7 @@ end;
 function TFrmMain.AddItems: Integer;
 var i: byte;
 begin
-  with sLVProj.Items.Add do
+  with LVProj.Items.Add do
   begin
     Caption := ''; IntToStr(Index + 1);
     Result  := Index;
@@ -148,6 +150,11 @@ end;
 procedure TFrmMain.AddLog(StrMsg: String);
 begin
   mmInfo.Lines.Add(DateTimeToStr(Date + Time)  + ' ' + StrMsg);
+end;
+
+procedure TFrmMain.cbxVclStylesChange(Sender: TObject);
+begin
+  TStyleManager.SetStyle(cbxVclStyles.Text);
 end;
 
 function TFrmMain.ConvertGitHubDateToDateTime(GitDateTime: String): String;
@@ -166,6 +173,7 @@ procedure TFrmMain.FormCreate(Sender: TObject);
 var
   b: UInt8;
   tz: TTimeZoneInformation;
+  StyleName: string;
 begin
   GetTimeZoneInformation(tz);
   GMT := tz.Bias div -60;
@@ -180,6 +188,12 @@ begin
   LoadConfigAndProjectList(loadAllConfig);
   ProjectListUpdateVisible;
   for b := 0 to Length(ArSortColumnsPos) -1 do ArSortColumnsPos[b] := stASC;
+
+  for StyleName in TStyleManager.StyleNames do cbxVclStyles.Items.Add(StyleName);
+  cbxVclStyles.Text := 'Amethyst Kamri';
+  TStyleManager.SetStyle(cbxVclStyles.Items[4]);
+  TStyleManager.SetStyle('Amethyst Kamri');
+
 end;
 
 function TFrmMain.GetProjectIndex(ProjectName: string): UInt16;
@@ -195,11 +209,11 @@ var
 begin
   r := 0;
   x := 1;
-  with sLVProj do
+  with LVProj do
   begin
     if ColumnIndex = 0 then
     begin
-      while (x < sLVProj.Items.Count-1) do
+      while (x < LVProj.Items.Count-1) do
       begin
         r := AnsiCompareText(Items[0].Caption, Items[x].Caption);
         if r <> 0 then Break;
@@ -208,7 +222,7 @@ begin
     end
       else
     begin
-      while (x < sLVProj.Items.Count) do
+      while (x < LVProj.Items.Count) do
       begin
         r := AnsiCompareText(Items[0].SubItems[ColumnIndex-1], Items[x].SubItems[ColumnIndex-1]);
         if r <> 0 then Break;
@@ -244,7 +258,7 @@ begin
 
   // Загрузка списка проектов PROJECT_LIST
   Section := 'PROJECT_LIST';
-  sLVProj.Clear;
+  LVProj.Clear;
   try
     INI.ReadSubSections(Section, ST, false);
     arProjectList := Nil;
@@ -286,7 +300,7 @@ begin
   if Not FrmAddProject.Applay then Exit;
   i := Length(arProjectList)-1;
   x := AddItems;
-  with sLVProj.Items[x] do
+  with LVProj.Items[x] do
   begin
     Caption                      := arProjectList[i].FullProjectName;
     SubItems[lv_proj_version]    := arProjectList[i].LastVersion;
@@ -369,8 +383,6 @@ exit;
     STFilters.Free;
   end;
 
-
-
 end;
 
 procedure TFrmMain.PM_DeletProjectClick(Sender: TObject);
@@ -378,9 +390,9 @@ Var
   DelProjName: string;
   INI: TIniFile;
 begin
-  DelProjName := sLVProj.Selected.Caption;
+  DelProjName := LVProj.Selected.Caption;
 
-  RemoveProjectFromProjectList(sLVProj.Selected.Caption);
+  RemoveProjectFromProjectList(LVProj.Selected.Caption);
   ProjectListUpdateVisible;
 
   INI := TIniFile.Create(FileConfig);
@@ -396,13 +408,13 @@ procedure TFrmMain.PM_OneProjectCheckClick(Sender: TObject);
 var
   x: UInt16;
 begin
-  x := GetProjectIndex(sLVProj.Selected.Caption);
+  x := GetProjectIndex(LVProj.Selected.Caption);
   OneProjectCheck(x);
 end;
 
 procedure TFrmMain.PopupMenuPopup(Sender: TObject);
 begin
-  if (sLVProj.Items.Count = 0) or (sLVProj.SelCount = 0) then
+  if (LVProj.Items.Count = 0) or (LVProj.SelCount = 0) then
   begin
     PM_DeletProject.Visible    := false;
     PM_OneProjectCheck.Visible := false;
@@ -419,15 +431,15 @@ var
   i, x, len: Word;
   dtl: TDateTime; //localized  date time
 begin
-  sLVProj.Items.Clear;
+  LVProj.Items.Clear;
   len := Length(arProjectList);
   if len = 0 then Exit;
 
-  sLVProj.Items.BeginUpdate;
+  LVProj.Items.BeginUpdate;
   for i := 0 to Len-1 do
   begin
     x := AddItems;
-    with sLVProj.Items[x] do
+    with LVProj.Items[x] do
     begin
       Caption                      := arProjectList[i].FullProjectName;
       SubItems[lv_proj_version]    := arProjectList[i].LastVersion;
@@ -441,7 +453,7 @@ begin
       SubItems[lv_project_url]     := arProjectList[i].ProjectUrl;
     end;
   end;
-  sLVProj.Items.EndUpdate;
+  LVProj.Items.EndUpdate;
 end;
 
 procedure TFrmMain.ProjectTracking;
@@ -486,7 +498,7 @@ begin
   end;
 end;
 
-procedure TFrmMain.sBtnTestClick(Sender: TObject);
+procedure TFrmMain.BtnTestClick(Sender: TObject);
 var
   s: string;
   tz: TTimeZoneInformation;
@@ -519,10 +531,10 @@ begin
 
 end;
 
-procedure TFrmMain.sLVProjColumnClick(Sender: TObject; Column: TListColumn);
+procedure TFrmMain.LVProjColumnClick(Sender: TObject; Column: TListColumn);
 var i: SmallInt;
 begin
-  if sLVProj.Items.Count < 2 then exit;
+  if LVProj.Items.Count < 2 then exit;
 
   {
   if LastColumnSorted <> Column.Index then
@@ -534,7 +546,7 @@ begin
   // The function GetWayToSortet() determines the direction of sorting
   ArSortColumnsPos[Column.Index] := GetWayToSortet(Column.Index);
 
-  sLVProj.CustomSort(@CustomSortProc, Column.Index);
+  LVProj.CustomSort(@CustomSortProc, Column.Index);
 
   if ArSortColumnsPos[Column.Index] = stASC then
     ArSortColumnsPos[Column.Index] := stDESC

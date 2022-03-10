@@ -19,18 +19,28 @@ object FrmMain: TFrmMain
     619)
   PixelsPerInch = 96
   TextHeight = 13
-  object sLVProj: TsListView
+  object Label1: TLabel
+    Left = 136
+    Top = 456
+    Width = 35
+    Height = 13
+    Anchors = [akLeft, akBottom]
+    Caption = #1057#1090#1080#1083#1080':'
+  end
+  object cbxVclStyles: TComboBox
+    Left = 176
+    Top = 450
+    Width = 145
+    Height = 21
+    Anchors = [akLeft, akBottom]
+    TabOrder = 0
+    OnChange = cbxVclStylesChange
+  end
+  object LVProj: TListView
     Left = 8
     Top = 16
-    Width = 1052
-    Height = 420
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clWindowText
-    Font.Height = -13
-    Font.Name = 'Tahoma'
-    Font.Style = []
-    ParentFont = False
-    BoundLabel.ParentFont = False
+    Width = 1049
+    Height = 417
     Anchors = [akLeft, akTop, akRight, akBottom]
     Columns = <
       item
@@ -73,38 +83,37 @@ object FrmMain: TFrmMain
         MinWidth = 100
         Width = 180
       end>
-    FullDrag = True
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'Tahoma'
+    Font.Style = []
     ReadOnly = True
     RowSelect = True
+    ParentFont = False
     PopupMenu = PopupMenu
     SmallImages = ImageListProj
-    SortType = stBoth
-    TabOrder = 0
+    TabOrder = 1
     ViewStyle = vsReport
-    OnColumnClick = sLVProjColumnClick
-    ExplicitWidth = 887
-    ExplicitHeight = 329
+    OnColumnClick = LVProjColumnClick
   end
-  object mmInfo: TsMemo
+  object mmInfo: TMemo
     Left = 8
-    Top = 491
-    Width = 1046
-    Height = 113
+    Top = 488
+    Width = 1049
+    Height = 121
     Anchors = [akLeft, akRight, akBottom]
     ScrollBars = ssVertical
-    TabOrder = 1
-    BoundLabel.ParentFont = False
-    ExplicitTop = 400
-    ExplicitWidth = 881
+    TabOrder = 2
   end
-  object sBtnTest: TsButton
-    Left = 16
+  object BtnTest: TButton
+    Left = 24
     Top = 448
     Width = 75
     Height = 25
-    Caption = 'TEST'
-    TabOrder = 2
-    OnClick = sBtnTestClick
+    Caption = 'T E S T'
+    TabOrder = 3
+    OnClick = BtnTestClick
   end
   object MainMenu: TMainMenu
     Left = 184
@@ -116,37 +125,6 @@ object FrmMain: TFrmMain
         OnClick = MM_AddReleasesClick
       end
     end
-  end
-  object sSkinManager: TsSkinManager
-    ButtonsOptions.OldGlyphsMode = True
-    InternalSkins = <>
-    SkinDirectory = 'C:\PROJECT+\COMPONENTS\AlphaSkins\askins_v14\Skins'
-    SkinInfo = 'N/A'
-    ThirdParty.ThirdEdits = ' '
-    ThirdParty.ThirdButtons = 'TButton'
-    ThirdParty.ThirdBitBtns = ' '
-    ThirdParty.ThirdCheckBoxes = ' '
-    ThirdParty.ThirdGroupBoxes = ' '
-    ThirdParty.ThirdListViews = ' '
-    ThirdParty.ThirdPanels = ' '
-    ThirdParty.ThirdGrids = ' '
-    ThirdParty.ThirdTreeViews = ' '
-    ThirdParty.ThirdComboBoxes = ' '
-    ThirdParty.ThirdWWEdits = ' '
-    ThirdParty.ThirdVirtualTrees = ' '
-    ThirdParty.ThirdGridEh = ' '
-    ThirdParty.ThirdPageControl = ' '
-    ThirdParty.ThirdTabControl = ' '
-    ThirdParty.ThirdToolBar = ' '
-    ThirdParty.ThirdStatusBar = ' '
-    ThirdParty.ThirdSpeedButton = ' '
-    ThirdParty.ThirdScrollControl = ' '
-    ThirdParty.ThirdUpDown = ' '
-    ThirdParty.ThirdScrollBar = ' '
-    ThirdParty.ThirdStaticText = ' '
-    ThirdParty.ThirdNativePaint = ' '
-    Left = 272
-    Top = 168
   end
   object ImageListProj: TImageList
     ColorDepth = cd32Bit

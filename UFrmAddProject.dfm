@@ -5,7 +5,7 @@ object FrmAddProject: TFrmAddProject
   BorderStyle = bsSingle
   Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1085#1086#1074#1099#1081' '#1087#1088#1086#1077#1082#1090
   ClientHeight = 483
-  ClientWidth = 585
+  ClientWidth = 590
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -16,155 +16,147 @@ object FrmAddProject: TFrmAddProject
   Position = poScreenCenter
   PixelsPerInch = 96
   TextHeight = 13
-  object sLblPojectLink: TsLabel
+  object LblUrlProject: TLabel
     Left = 16
     Top = 16
     Width = 140
     Height = 13
     Caption = 'C'#1089#1099#1083#1082#1072' '#1087#1088#1086#1077#1082#1090#1072' '#1085#1072' GitHub: '
   end
-  object sLblProjectDir: TsLabel
-    Left = 16
-    Top = 72
-    Width = 435
-    Height = 26
-    Caption = 
-      #1044#1080#1088#1077#1082#1090#1086#1088#1080#1103' '#1076#1083#1103' '#1089#1082#1072#1095#1080#1074#1072#1085#1080#1103' '#1088#1077#1083#1080#1079#1086#1074' '#1101#1090#1086#1075#1086' '#1087#1088#1086#1077#1082#1090#1072': '#13#10'('#1087#1091#1090#1100' '#1087#1086' '#1091#1084#1086#1083 +
-      #1095#1072#1085#1080#1102' <User profile>\Downloads\GitHubReleasesTracker\<project na' +
-      'me>)'
-  end
-  object sLblFilter: TsLabel
+  object LblFilter: TLabel
     Left = 16
     Top = 296
     Width = 208
     Height = 13
     Caption = #1060#1080#1083#1100#1090#1088' ('#1074#1087#1080#1096#1080#1090#1077' '#1089#1083#1086#1074#1072' '#1095#1077#1088#1077#1079' '#1079#1072#1087#1103#1090#1091#1102'):'
   end
-  object sBtnApply: TsButton
-    Left = 216
-    Top = 440
-    Width = 145
-    Height = 33
-    Caption = #1044' '#1054' '#1041' '#1040' '#1042' '#1048' '#1058' '#1068
-    TabOrder = 0
-    OnClick = sBtnApplyClick
+  object SpeedButton1: TSpeedButton
+    Left = 440
+    Top = 104
+    Width = 23
+    Height = 22
+    Caption = '...'
+    OnClick = SpeedButton1Click
   end
-  object sEdProjectLink: TsEdit
+  object edProjectLink: TEdit
     Left = 16
     Top = 32
     Width = 441
     Height = 21
-    TabOrder = 1
+    TabOrder = 0
     Text = 'https://github.com/superbot-coder/chia_plotting_tools'
-    OnChange = sEdProjectLinkChange
+    OnChange = edProjectLinkChange
   end
-  object sDirEdSaveDir: TsDirectoryEdit
+  object statTextProjectDir: TStaticText
     Left = 16
-    Top = 104
+    Top = 72
     Width = 441
-    Height = 21
-    MaxLength = 255
-    TabOrder = 2
-    CheckOnExit = True
-    Text = ''
-    Root = 'rfDesktop'
+    Height = 25
+    AutoSize = False
+    Caption = 
+      #1044#1080#1088#1077#1082#1090#1086#1088#1080#1103' '#1076#1083#1103' '#1089#1082#1072#1095#1080#1074#1072#1085#1080#1103' '#1088#1077#1083#1080#1079#1086#1074' '#1101#1090#1086#1075#1086' '#1087#1088#1086#1077#1082#1090#1072': '#13#10'('#1087#1091#1090#1100' '#1087#1086' '#1091#1084#1086#1083 +
+      #1095#1072#1085#1080#1102' <User profile>\Downloads\GitHubReleasesTracker\<project na' +
+      'me>)'
+    TabOrder = 1
   end
-  object sChBoxSubDir: TsCheckBox
+  object ChBoxSubDir: TCheckBox
     Left = 16
     Top = 144
-    Width = 212
+    Width = 209
     Height = 17
     Caption = #1044#1083#1103' '#1082#1072#1078#1076#1086#1075#1086' '#1088#1077#1083#1080#1079#1072' '#1089#1091#1073#1076#1080#1088#1077#1082#1090#1086#1088#1080#1103
     Checked = True
     State = cbChecked
+    TabOrder = 2
+  end
+  object ChBoxDownloadLastRelease: TCheckBox
+    Left = 16
+    Top = 176
+    Width = 281
+    Height = 17
+    Caption = #1057#1082#1072#1095#1072#1090#1100' '#1087#1086#1089#1083#1077#1076#1085#1080#1081' '#1088#1077#1083#1080#1079' '#1087#1088#1080' '#1076#1086#1073#1072#1074#1083#1077#1085#1085#1080' '#1087#1088#1086#1077#1082#1090#1072
     TabOrder = 3
   end
-  object sRGRulesNotis: TsRadioGroup
-    Left = 344
-    Top = 160
-    Width = 225
-    Height = 121
-    Caption = #1055#1088#1072#1074#1080#1083#1072':'
-    TabOrder = 4
-    ItemIndex = 0
-    Items.Strings = (
-      #1058#1086#1083#1100#1082#1086' '#1091#1074#1077#1076#1086#1084#1083#1103#1090#1100
-      #1059#1074#1077#1076#1086#1084#1083#1103#1090#1100' '#1080' '#1089#1082#1072#1095#1080#1074#1072#1090#1100
-      #1057#1082#1072#1095#1080#1074#1072#1090#1100' '#1073#1077#1079' '#1091#1074#1077#1076#1086#1084#1083#1077#1085#1080#1081)
-  end
-  object sRGRuleDownload: TsRadioGroup
-    Left = 16
-    Top = 208
-    Width = 297
-    Height = 73
-    Caption = #1055#1088#1080#1074#1080#1083#1072' '#1089#1082#1072#1095#1080#1074#1072#1085#1080#1103' '#1092#1072#1081#1083#1086#1074
-    TabOrder = 5
-    ItemIndex = 0
-    Items.Strings = (
-      #1057#1082#1072#1095#1080#1074#1072#1090#1100' '#1074#1089#1077' '#1092#1072#1081#1083#1099
-      #1057#1082#1072#1095#1080#1074#1072#1090#1100' '#1080#1089#1087#1086#1083#1100#1079#1091#1103' '#1092#1080#1083#1100#1090#1088)
-  end
-  object sEdFilter: TsEdit
+  object EdFilter: TEdit
     Left = 16
     Top = 312
     Width = 553
     Height = 21
-    TabOrder = 6
+    TabOrder = 4
     Text = 'windows, win, win64, zip, rar'
   end
-  object sPnlImage: TsPanel
+  object mm: TMemo
+    Left = 16
+    Top = 344
+    Width = 553
+    Height = 73
+    Lines.Strings = (
+      'mm')
+    TabOrder = 5
+  end
+  object Panel: TPanel
     Left = 472
     Top = 16
     Width = 97
     Height = 113
     BevelOuter = bvLowered
-    TabOrder = 7
-    object sImagProject: TsImage
+    BiDiMode = bdLeftToRight
+    ParentBiDiMode = False
+    TabOrder = 6
+    object ImagProject: TImage
       Left = 8
       Top = 8
-      Width = 80
-      Height = 80
-      Align = alCustom
-      Picture.Data = {07544269746D617000000000}
+      Width = 81
+      Height = 81
       Stretch = True
     end
-    object sLblAvatar: TsLabel
-      Left = 25
-      Top = 93
+    object LblAvatar: TLabel
+      Left = 27
+      Top = 96
       Width = 41
       Height = 13
       Caption = '(Avatar)'
     end
   end
-  object sChBoxDownloadLastRelease: TsCheckBox
+  object BtnApply: TButton
+    Left = 208
+    Top = 432
+    Width = 145
+    Height = 33
+    Caption = #1044' '#1054' '#1041' '#1040' '#1042' '#1048' '#1058' '#1068
+    TabOrder = 7
+    OnClick = BtnApplyClick
+  end
+  object edSaveDir: TEdit
     Left = 16
-    Top = 176
-    Width = 288
-    Height = 17
-    Caption = #1057#1082#1072#1095#1072#1090#1100' '#1087#1086#1089#1083#1077#1076#1085#1080#1081' '#1088#1077#1083#1080#1079' '#1087#1088#1080' '#1076#1086#1073#1072#1074#1083#1077#1085#1085#1080' '#1087#1088#1086#1077#1082#1090#1072
+    Top = 104
+    Width = 417
+    Height = 21
     TabOrder = 8
   end
-  object mm: TsMemo
-    Left = 16
-    Top = 344
-    Width = 553
-    Height = 81
-    Lines.Strings = (
-      'mm')
-    ScrollBars = ssVertical
+  object RGRulesNotis: TRadioGroup
+    Left = 344
+    Top = 160
+    Width = 225
+    Height = 121
+    Caption = #1055#1088#1072#1074#1080#1083#1072':'
+    ItemIndex = 0
+    Items.Strings = (
+      #1058#1086#1083#1100#1082#1086' '#1091#1074#1077#1076#1086#1084#1083#1103#1090#1100
+      #1059#1074#1077#1076#1086#1084#1083#1103#1090#1100' '#1080' '#1089#1082#1072#1095#1080#1074#1072#1090#1100
+      #1057#1082#1072#1095#1080#1074#1072#1090#1100' '#1073#1077#1079' '#1091#1074#1077#1076#1086#1084#1083#1077#1085#1080#1081)
     TabOrder = 9
-    Text = 'mm'
-    BoundLabel.ParentFont = False
   end
-  object sSkinProvider: TsSkinProvider
-    AddedTitle.Font.Charset = DEFAULT_CHARSET
-    AddedTitle.Font.Color = clNone
-    AddedTitle.Font.Height = -11
-    AddedTitle.Font.Name = 'Tahoma'
-    AddedTitle.Font.Style = []
-    SkinData.SkinSection = 'FORM'
-    TitleButtons = <>
-    Left = 56
-    Top = 360
+  object RGRuleDownload: TRadioGroup
+    Left = 16
+    Top = 208
+    Width = 297
+    Height = 73
+    Caption = #1055#1088#1080#1074#1080#1083#1072' '#1089#1082#1072#1095#1080#1074#1072#1085#1080#1103' '#1092#1072#1081#1083#1086#1074
+    ItemIndex = 0
+    Items.Strings = (
+      #1057#1082#1072#1095#1080#1074#1072#1090#1100' '#1074#1089#1077' '#1092#1072#1081#1083#1099
+      #1057#1082#1072#1095#1080#1074#1072#1090#1100' '#1080#1089#1087#1086#1083#1100#1079#1091#1103' '#1092#1080#1083#1100#1090#1088)
+    TabOrder = 10
   end
 end
