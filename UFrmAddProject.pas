@@ -16,8 +16,6 @@ type
     statTextProjectDir: TStaticText;
     ChBoxSubDir: TCheckBox;
     ChBoxDownloadLastRelease: TCheckBox;
-    LblFilter: TLabel;
-    EdFilter: TEdit;
     mm: TMemo;
     Panel: TPanel;
     ImagProject: TImage;
@@ -27,6 +25,11 @@ type
     edSaveDir: TEdit;
     RGRulesNotis: TRadioGroup;
     RGRuleDownload: TRadioGroup;
+    GrBoxFilter: TGroupBox;
+    EdFilterInclude: TEdit;
+    edFilterExclude: TEdit;
+    LblExclude: TLabel;
+    LblInclude: TLabel;
     procedure BtnApplyClick(Sender: TObject);
     function ConverLinkToApiLink(Link: String): String;
     Procedure AddProjectList;
@@ -189,7 +192,8 @@ begin
       WriteString(Section, 'FullProjectName', arProjectList[Index].FullProjectName);
       WriteString(Section, 'AvatarFile', arProjectList[Index].AvatarFile);
       WriteString(Section, 'AvatarUrl',arProjectList[Index].AvatarUrl );
-      WriteString(Section, 'Filters', arProjectList[Index].Filters);
+      WriteString(Section, 'FilterInclude', arProjectList[Index].FilterInclude);
+      WriteString(Section, 'FilterExclude', arProjectList[Index].FilterExclude);
       WriteString(Section, 'DatePublish', arProjectList[Index].DatePublish);
       WriteString(Section, 'Language', arProjectList[Index].Language);
       WriteString(Section, 'LastVersion', arProjectList[Index].LastVersion);
@@ -197,6 +201,7 @@ begin
       WriteInteger(Section, 'RuleDownload', arProjectList[Index].RuleDownload);
       WriteInteger(Section, 'RuleNotis', arProjectList[Index].RuleNotis);
       WriteBool(Section, 'NeedSubDir', arProjectList[Index].NeedSubDir);
+      WriteBool(Section, 'NewRelease', arProjectList[Index].NewRelease);
     end;
   finally
     INI.Free;
@@ -276,7 +281,7 @@ begin
     // Получаю полное имя проекта; Getting full name the project
     FFullName := RESTResponse.JSONValue.FindValue('full_name').Value;
     // Заменяю символ "/" на "_" ;
-    FFullName := StringReplace(FFullName, '/', '_', [rfReplaceAll, rfIgnoreCase]);
+    //FFullName := StringReplace(FFullName, '/', '_', [rfReplaceAll, rfIgnoreCase]);
     mm.Lines.Add('Название проекта: ' + FProjectName);
 
     // Получаю URL аватарки проекта; Getting the avatar URL of the project
@@ -290,7 +295,7 @@ begin
     if edSaveDir.Text <> '' then
       FProgectDir := edSaveDir.Text
     else
-      FProgectDir := GLProjectsPath + FFullName;
+      FProgectDir := GLProjectsPath + StringReplace(FFullName, '/', '_', [rfReplaceAll, rfIgnoreCase]);
     if Not DirectoryExists(FProgectDir) then ForceDirectories(FProgectDir);
 
     // Скачиваю файл аватарки; Downloading avatarka file
@@ -358,13 +363,15 @@ begin
     FullProjectName := FFullName;
     AvatarFile      := FAvatarFileName;
     AvatarUrl       := FAvatar_url;
-    Filters         := EdFilter.Text;
+    FilterInclude   := EdFilterInclude.Text;
+    FilterExclude   := edFilterExclude.Text;
     DatePublish     := FPublishRelease;
     Language        := FLanguage;
     LastVersion     := FLastReleaseVersion;
     LastChecked     := Date + Time;
     RuleDownload    := RGRuleDownload.ItemIndex;
     RuleNotis       := RGRulesNotis.ItemIndex;
+    NewRelease      := False;
   end;
 
   SaveAddedNewProject(Length(arProjectList) - 1);

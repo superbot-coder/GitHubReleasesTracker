@@ -4,7 +4,7 @@ object FrmAddProject: TFrmAddProject
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1085#1086#1074#1099#1081' '#1087#1088#1086#1077#1082#1090
-  ClientHeight = 483
+  ClientHeight = 511
   ClientWidth = 590
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -22,13 +22,6 @@ object FrmAddProject: TFrmAddProject
     Width = 140
     Height = 13
     Caption = 'C'#1089#1099#1083#1082#1072' '#1087#1088#1086#1077#1082#1090#1072' '#1085#1072' GitHub: '
-  end
-  object LblFilter: TLabel
-    Left = 16
-    Top = 296
-    Width = 208
-    Height = 13
-    Caption = #1060#1080#1083#1100#1090#1088' ('#1074#1087#1080#1096#1080#1090#1077' '#1089#1083#1086#1074#1072' '#1095#1077#1088#1077#1079' '#1079#1072#1087#1103#1090#1091#1102'):'
   end
   object SpeedButton1: TSpeedButton
     Left = 440
@@ -77,22 +70,14 @@ object FrmAddProject: TFrmAddProject
     Caption = #1057#1082#1072#1095#1072#1090#1100' '#1087#1086#1089#1083#1077#1076#1085#1080#1081' '#1088#1077#1083#1080#1079' '#1087#1088#1080' '#1076#1086#1073#1072#1074#1083#1077#1085#1085#1080' '#1087#1088#1086#1077#1082#1090#1072
     TabOrder = 3
   end
-  object EdFilter: TEdit
-    Left = 16
-    Top = 312
-    Width = 553
-    Height = 21
-    TabOrder = 4
-    Text = 'windows, win, win64, zip, rar'
-  end
   object mm: TMemo
     Left = 16
-    Top = 344
+    Top = 376
     Width = 553
-    Height = 73
+    Height = 89
     Lines.Strings = (
       'mm')
-    TabOrder = 5
+    TabOrder = 4
   end
   object Panel: TPanel
     Left = 472
@@ -102,7 +87,7 @@ object FrmAddProject: TFrmAddProject
     BevelOuter = bvLowered
     BiDiMode = bdLeftToRight
     ParentBiDiMode = False
-    TabOrder = 6
+    TabOrder = 5
     object ImagProject: TImage
       Left = 8
       Top = 8
@@ -119,12 +104,12 @@ object FrmAddProject: TFrmAddProject
     end
   end
   object BtnApply: TButton
-    Left = 208
-    Top = 432
+    Left = 216
+    Top = 472
     Width = 145
     Height = 33
     Caption = #1044' '#1054' '#1041' '#1040' '#1042' '#1048' '#1058' '#1068
-    TabOrder = 7
+    TabOrder = 6
     OnClick = BtnApplyClick
   end
   object edSaveDir: TEdit
@@ -132,7 +117,7 @@ object FrmAddProject: TFrmAddProject
     Top = 104
     Width = 417
     Height = 21
-    TabOrder = 8
+    TabOrder = 7
   end
   object RGRulesNotis: TRadioGroup
     Left = 344
@@ -145,7 +130,7 @@ object FrmAddProject: TFrmAddProject
       #1058#1086#1083#1100#1082#1086' '#1091#1074#1077#1076#1086#1084#1083#1103#1090#1100
       #1059#1074#1077#1076#1086#1084#1083#1103#1090#1100' '#1080' '#1089#1082#1072#1095#1080#1074#1072#1090#1100
       #1057#1082#1072#1095#1080#1074#1072#1090#1100' '#1073#1077#1079' '#1091#1074#1077#1076#1086#1084#1083#1077#1085#1080#1081)
-    TabOrder = 9
+    TabOrder = 8
   end
   object RGRuleDownload: TRadioGroup
     Left = 16
@@ -157,6 +142,44 @@ object FrmAddProject: TFrmAddProject
     Items.Strings = (
       #1057#1082#1072#1095#1080#1074#1072#1090#1100' '#1074#1089#1077' '#1092#1072#1081#1083#1099
       #1057#1082#1072#1095#1080#1074#1072#1090#1100' '#1080#1089#1087#1086#1083#1100#1079#1091#1103' '#1092#1080#1083#1100#1090#1088)
+    TabOrder = 9
+  end
+  object GrBoxFilter: TGroupBox
+    Left = 16
+    Top = 288
+    Width = 553
+    Height = 81
+    Caption = #1060#1080#1083#1100#1090#1088' ('#1074#1087#1080#1096#1080#1090#1077' '#1089#1083#1086#1074#1072' '#1095#1077#1088#1077#1079' '#1079#1072#1087#1103#1090#1091#1102'):'
     TabOrder = 10
+    object LblExclude: TLabel
+      Left = 280
+      Top = 28
+      Width = 61
+      Height = 13
+      Caption = #1048#1089#1082#1083#1102#1095#1080#1090#1100':'
+    end
+    object LblInclude: TLabel
+      Left = 16
+      Top = 28
+      Width = 55
+      Height = 13
+      Caption = #1042#1082#1083#1102#1095#1080#1090#1100':'
+    end
+    object EdFilterInclude: TEdit
+      Left = 8
+      Top = 44
+      Width = 249
+      Height = 21
+      TabOrder = 0
+      Text = 'windows, win, win64, 64bit'
+    end
+    object edFilterExclude: TEdit
+      Left = 272
+      Top = 44
+      Width = 265
+      Height = 21
+      TabOrder = 1
+      Text = 'mac, linux, 32bit'
+    end
   end
 end

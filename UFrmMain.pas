@@ -22,7 +22,8 @@ type
     FullProjectName: string;
     AvatarFile     : string;
     AvatarUrl      : string;
-    Filters        : string;
+    FilterInclude  : string;
+    FilterExclude  : string;
     DatePublish    : string;
     Language       : string;
     LastVersion    : string;
@@ -30,6 +31,7 @@ type
     RuleDownload   : UInt8;
     RuleNotis      : UInt8;
     NeedSubDir     : Boolean;
+    NewRelease     : Boolean;
   End;
 
 type TLoadConfigsType = (loadAllConfig, loadProjList); 
@@ -63,10 +65,10 @@ type
     procedure AddLog(StrMsg: String);
     procedure LVProjColumnClick(Sender: TObject; Column: TListColumn);
     function GetWayToSortet(ColumnIndex: UInt8): TSortType;
-    function GetProjectIndex(ProjectName: string): UInt16;
+    function GetProjectIndex(ProjectName: string): Integer;
     procedure TimerTrackerTimer(Sender: TObject);
     procedure ProjectTracking;
-    procedure OneProjectCheck(ProjectIndex: UInt16);
+    procedure OneProjectCheck(ProjectIndex: Integer);
     procedure PM_OneProjectCheckClick(Sender: TObject);
     procedure BtnTestClick(Sender: TObject);
     function ConvertGitHubDateToDateTime(GitDateTime: String): String;
@@ -176,7 +178,7 @@ var
   StyleName: string;
 begin
   GetTimeZoneInformation(tz);
-  GMT := tz.Bias div -60;
+  GMT      := tz.Bias div -60;
   Caption  := CAPTION_MB;
   CurrDir  := ExtractFileDir(Application.ExeName);
   CurrPath := CurrDir + PathDelim;
@@ -196,9 +198,16 @@ begin
 
 end;
 
-function TFrmMain.GetProjectIndex(ProjectName: string): UInt16;
+function TFrmMain.GetProjectIndex(ProjectName: string): Integer;
+var i: Integer;
 begin
-  Result := 0;
+  Result := -1;
+  for i := 0 to length(arProjectList) -1 do
+    if arProjectList[i].FullProjectName = ProjectName then
+    begin
+      Result := i;
+      Break;
+    end;
 end;
 
 function TFrmMain.GetWayToSortet(ColumnIndex: UInt8): TSortType;
@@ -276,7 +285,8 @@ begin
         FullProjectName := INI.ReadString(SubSection, 'FullProjectName', '');
         AvatarFile      := INI.ReadString(SubSection, 'AvatarFile','');
         AvatarUrl       := INI.ReadString(SubSection, 'AvatarUrl','');
-        Filters         := INI.ReadString(SubSection, 'Filters','');
+        FilterInclude   := INI.ReadString(SubSection, 'FilterInclude','');
+        FilterExclude   := INI.ReadString(SubSection, 'FilterExclude','');
         DatePublish     := INI.ReadString(SubSection, 'DatePublish','');
         Language        := INI.ReadString(SubSection, 'Language','');
         LastVersion     := INI.ReadString(SubSection, 'LastVersion','');
@@ -284,6 +294,7 @@ begin
         RuleDownload    := INI.ReadInteger(SubSection, 'RuleDownload', 0);
         RuleNotis       := INI.ReadInteger(SubSection, 'RuleNotis', 0);
         NeedSubDir      := INI.ReadBool(SubSection, 'NeedSubDir', true);
+        NewRelease      := INI.ReadBool(SubSection, 'NewRelease', false);
       end;
     end;
   finally
@@ -311,18 +322,24 @@ begin
   end;
 end;
 
-procedure TFrmMain.OneProjectCheck(ProjectIndex: UInt16);
+procedure TFrmMain.OneProjectCheck(ProjectIndex: Integer);
 var
-  JSONArray    : TJSONArray;
-  tag_name     : string;
-  published_at : string;
-  FileURL      : string;
-  STFilters    : TStrings;
-  i: UInt8;
+  JSONArray     : TJSONArray;
+  tag_name      : string;
+  published_at  : string;
+  DownloadDir   : string;
+  SavedFileName : string;
+  ext           : string;
+  s_temp        : string;
+  STFilters     : TStrings;
+  STFilesURL    : TStrings;
+  Checked       : Boolean;
+  i, j          : UInt8;
+  cnt           : UInt8;
 begin
 
-  ShowMessage('OneProjectTracking');
-exit;
+  if ProjectIndex = -1 then Exit;
+
   RESTResponse.RootElement := '[0]';
   RESTClient.Accept        := arContentTypeStr[ord(ctAPPLICATION_JSON)];
   RESTClient.BaseURL       := arProjectList[ProjectIndex].ApiReleasesUrl;
@@ -349,10 +366,22 @@ exit;
   tag_name     := RESTResponse.JSONValue.FindValue('tag_name').Value;
   published_at := RESTResponse.JSONValue.FindValue('published_at').Value;
 
-  // проверка версии релиза; verifying release version
+  // ****** проверка версии релиза; verifying release version ******
+  if arProjectList[ProjectIndex].LastVersion = tag_name then
+  begin
+    s_temp := DateTimeToStr(Date + Time) + ' Новая версия релиза '
+           + arProjectList[ProjectIndex].ProjectName + ' не обнаружена.';
+    MessageBox(Handle, PChar(s_temp), PChar(CAPTION_MB), MB_ICONINFORMATION);
+    mmInfo.Lines.Add(s_temp);
+    mmInfo.Lines.Add('Проверка релиза завершина.');
+    exit;
+  end;
 
-  // ..............
-  // ..............
+  s_temp := 'Oбнаружена новая версия ' + tag_name + ' релиза '
+            + arProjectList[ProjectIndex].ProjectName;
+  if MessageBox(Handle, PChar(s_temp),
+                PChar(CAPTION_MB),
+                MB_ICONINFORMATION or MB_YESNO) = ID_NO then Exit;
 
   // Получаю массив загруженных файлов; Getting an array of downloaded files
   JSONArray := RESTResponse.JSONValue.FindValue('assets') as TJSONArray;
@@ -362,25 +391,122 @@ exit;
     Exit;
   end;
 
-  STFilters := TStringList.Create;
+  STFilters  := TStringList.Create;
+  STFilesURL := TStringList.Create;
   try
+    // создание списка файлов для закачки; creating files list for downloasd
     for i := 0 to JSONArray.Count -1 do
-    begin
-      FileURL := JSONArray.Items[i].FindValue('browser_download_url').Value;
-      if arProjectList[ProjectIndex].RuleDownload = 0 then
-      begin
-        // Безусловное скачивание
+      STFilesURL.Add(JSONArray.Items[i].FindValue('browser_download_url').Value);
 
-      end
+    // Условное скачивание, использование фильтра
+    // Conditional download, using a filter
+    if arProjectList[ProjectIndex].RuleDownload = 1 then
+    begin
+
+      // Использую фильтр "Включить"; Use the filter "Include"
+      s_temp := StringReplace(arProjectList[ProjectIndex].FilterInclude, ' ', '', [rfReplaceAll]);
+      STFilters.Text := StringReplace(s_temp, ',', #13, [rfReplaceAll]);
+      //ShowMessage(STFilters.Text);
+
+      cnt := 0;
+      while STFilesURL.Count <> cnt do
+      begin
+        SavedFileName := AnsiLowerCase(STFilesURL.Strings[cnt]);
+        Delete(SavedFileName, 1, LastDelimiter('/',SavedFileName));
+
+        Checked := false;
+        for j := 0 to STFilters.Count -1 do
+          if AnsiPos(STFilters.Strings[j], SavedFileName) <> 0 then
+          begin
+            Checked := true;
+            Break;
+          end;
+
+        if Checked = false then
+        begin
+          STFilesURL.Delete(cnt);
+          Continue;
+        end;
+        Inc(cnt);
+      end;
+
+      // Использую фильтр "Исключить"; Use the filter "Exclude"
+      s_temp := StringReplace(arProjectList[ProjectIndex].FilterExclude, ' ', '', [rfReplaceAll]);
+      STFilters.Text := StringReplace(s_temp, ',', #13, [rfReplaceAll]);
+      //ShowMessage(STFilters.Text);
+
+      cnt := 0;
+      while STFilesURL.Count <> cnt do
+      begin
+        SavedFileName := AnsiLowerCase(STFilesURL.Strings[cnt]);
+        Delete(SavedFileName, 1, LastDelimiter('/',SavedFileName));
+
+        Checked := false;
+        for j := 0 to STFilters.Count -1 do
+          if AnsiPos(STFilters.Strings[j], SavedFileName) <> 0 then
+          begin
+            Checked := true;
+            Break;
+          end;
+
+        if Checked = true then
+        begin
+          STFilesURL.Delete(cnt);
+          Continue;
+        end;
+        Inc(cnt);
+      end;
+
+    end;
+
+    // ****** Скачивание файлов из списка; Download files from the list ******
+
+    // подготовка директорнии для скачивания; preparing a directory for download
+    if arProjectList[ProjectIndex].NeedSubDir then
+      DownloadDir := arProjectList[ProjectIndex].ProjectDir + '\' + tag_name
+    else
+      DownloadDir := arProjectList[ProjectIndex].ProjectDir;
+    if Not DirectoryExists(DownloadDir) then ForceDirectories(DownloadDir);
+
+    // mmInfo.Lines.Add('DownloadDir=' + DownloadDir);
+
+    for i:=0 to STFilesURL.Count -1 do
+    begin
+
+      RESTResponse.RootElement := '';
+      RESTClient.Accept        := ''; //'application/zip';
+      RESTClient.BaseURL       := STFilesURL.Strings[i];
+      RESTRequest.Execute;
+
+      if RESTResponse.StatusCode <> 200 then
+      begin
+        // message ...
+        Continue;
+      end;
+
+      SavedFileName := STFilesURL.Strings[i];
+      Delete(SavedFileName, 1, LastDelimiter('/', SavedFileName));
+      if arProjectList[ProjectIndex].NeedSubDir then
+        SavedFileName := DownloadDir + '\' + SavedFileName
       else
       begin
-        // Условное скачивыание, с использованием фильтра
-        STFilters.Clear;
-
+        ext           := ExtractFileExt(SavedFileName);
+        SavedFileName := Copy(SavedFileName, 1, length(SavedFileName)-length(ext));
+        SavedFileName := DownloadDir + '\' + SavedFileName + '_' + tag_name + ext;
       end;
+
+      TFile.WriteAllBytes(SavedFileName, RESTResponse.RawBytes);
+
+      if FileExists(SavedFileName) then
+        mmInfo.Lines.Add('Файл: ' + SavedFileName + ' был скачан удачно.')
+      else
+        mmInfo.Lines.Add('Ошибка файл: ' + SavedFileName + ' не обнаружен.');
     end;
+
+
   finally
     STFilters.Free;
+    STFilesURL.Free;
   end;
 
 end;
@@ -409,6 +535,7 @@ var
   x: UInt16;
 begin
   x := GetProjectIndex(LVProj.Selected.Caption);
+  mmInfo.Lines.Add(IntToStr(x));
   OneProjectCheck(x);
 end;
 
@@ -451,6 +578,7 @@ begin
       SubItems[lv_date_last_check] := DateTimeToStr(arProjectList[i].LastChecked);
       SubItems[lv_Language]        := arProjectList[i].Language;
       SubItems[lv_project_url]     := arProjectList[i].ProjectUrl;
+      if arProjectList[i].NewRelease then ImageIndex := 1 else ImageIndex := 0;
     end;
   end;
   LVProj.Items.EndUpdate;
@@ -501,34 +629,8 @@ end;
 procedure TFrmMain.BtnTestClick(Sender: TObject);
 var
   s: string;
-  tz: TTimeZoneInformation;
-  fs: TFormatSettings;
-  dt:  TDateTime; // пдобальное нелокализованое время
-  dtl: TDateTime; // локализованное время с учетом часового пояса
-  GMT: ShortInt;
 begin
-
-   GetTimeZoneInformation(tz);
-   GMT := tz.Bias div -60;
-   mmInfo.Lines.Add('GMT ' + IntToStr(GMT));
-   mmInfo.Lines.Add(tz.StandardName);
-   mmInfo.Lines.Add(tz.DaylightName);
-   mmInfo.Lines.Add('GMT ' + IntToStr(tz.DaylightBias div -60 ));
-
-
-   // YYYY-MM-DDTHH:MM:SSZ '2021-06-22T11:06:04Z'
-   fs.ShortDateFormat := 'YYYY-MM-DD';
-   fs.ShortTimeFormat := 'HH:MM:SS';
-   fs.DateSeparator  := '-';
-   fs.TimeSeparator  := ':';
-   dt  := StrToDateTime('2021-06-22T11:06:04Z', fs);
-   dtl := IncHour(dt, GMT);
-
-   mmInfo.Lines.Add('dt: ' +DateTimeToStr(dt) + ' dtl: ' + DateTimeToStr(dtl));
-
-   s := ConvertGitHubDateToDateTime('2021-06-22T11:06:04Z');
-   mmInfo.Lines.Add('DateTime : ' + s);
-
+  //
 end;
 
 procedure TFrmMain.LVProjColumnClick(Sender: TObject; Column: TListColumn);
