@@ -178,7 +178,7 @@ var
 begin
 
   if Not DirectoryExists(ConfigDir) then ForceDirectories(ConfigDir);
-  Section := 'PROJECT_LIST\'+ arProjectList[Index].FullProjectName;
+  Section := 'PROJECT_LIST\'+ StringReplace(arProjectList[Index].FullProjectName, '/', '_', [rfReplaceAll]);
 
   INI := TIniFile.Create(FileConfig);
   try
@@ -201,7 +201,7 @@ begin
       WriteInteger(Section, 'RuleDownload', arProjectList[Index].RuleDownload);
       WriteInteger(Section, 'RuleNotis', arProjectList[Index].RuleNotis);
       WriteBool(Section, 'NeedSubDir', arProjectList[Index].NeedSubDir);
-      WriteBool(Section, 'NewRelease', arProjectList[Index].NewRelease);
+      WriteDateTime(Section, 'NewReleaseDT', arProjectList[Index].NewReleaseDT);
     end;
   finally
     INI.Free;
@@ -371,7 +371,8 @@ begin
     LastChecked     := Date + Time;
     RuleDownload    := RGRuleDownload.ItemIndex;
     RuleNotis       := RGRulesNotis.ItemIndex;
-    NewRelease      := False;
+    //NewRelease      := true;
+    NewReleaseDT    := Date + Time;
   end;
 
   SaveAddedNewProject(Length(arProjectList) - 1);

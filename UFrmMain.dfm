@@ -75,7 +75,7 @@ object FrmMain: TFrmMain
         Caption = #1071#1079#1099#1082
         MaxWidth = 300
         MinWidth = 50
-        Width = 150
+        Width = 100
       end
       item
         Caption = 'URL '#1055#1088#1086#1077#1082#1090#1072

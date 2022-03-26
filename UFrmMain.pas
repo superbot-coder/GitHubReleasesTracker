@@ -31,7 +31,7 @@ type
     RuleDownload   : UInt8;
     RuleNotis      : UInt8;
     NeedSubDir     : Boolean;
-    NewRelease     : Boolean;
+    NewReleaseDT   : TDateTime;
   End;
 
 type TLoadConfigsType = (loadAllConfig, loadProjList); 
@@ -90,6 +90,7 @@ var
   GLProjectsPath : String;
   arProjectList  : array of TProjectListRec;
   GMT            : ShortInt; // Часовой пояс
+  GL_NewReleasesLive : Byte;
 
 Const
   CAPTION_MB = 'GitHub Releases Tracker';
@@ -167,7 +168,7 @@ begin
   fs.ShortTimeFormat := 'HH:MM:SS';
   fs.DateSeparator   := '-';
   fs.TimeSeparator   := ':';
-  //gдобальное нелокализованое время; global non-localized time
+  // Гдобальное нелокализованое время; global non-localized time
   Result := DateTimeToStr(StrToDateTime(GitDateTime, fs));
 end;
 
@@ -178,6 +179,7 @@ var
   StyleName: string;
 begin
   GetTimeZoneInformation(tz);
+  GL_NewReleasesLive := 3;
   GMT      := tz.Bias div -60;
   Caption  := CAPTION_MB;
   CurrDir  := ExtractFileDir(Application.ExeName);
@@ -294,7 +296,7 @@ begin
         RuleDownload    := INI.ReadInteger(SubSection, 'RuleDownload', 0);
         RuleNotis       := INI.ReadInteger(SubSection, 'RuleNotis', 0);
         NeedSubDir      := INI.ReadBool(SubSection, 'NeedSubDir', true);
-        NewRelease      := INI.ReadBool(SubSection, 'NewRelease', false);
+        NewReleaseDT    := INI.ReadDateTime(SubSection, 'NewReleaseDT', 0);
       end;
     end;
   finally
@@ -326,7 +328,6 @@ procedure TFrmMain.OneProjectCheck(ProjectIndex: Integer);
 var
   JSONArray     : TJSONArray;
   tag_name      : string;
-  published_at  : string;
   DownloadDir   : string;
   SavedFileName : string;
   ext           : string;
@@ -336,6 +337,7 @@ var
   Checked       : Boolean;
   i, j          : UInt8;
   cnt           : UInt8;
+  DatePublish   : TDateTime;
 begin
 
   if ProjectIndex = -1 then Exit;
@@ -363,37 +365,49 @@ begin
     exit;
   end;
 
-  tag_name     := RESTResponse.JSONValue.FindValue('tag_name').Value;
-  published_at := RESTResponse.JSONValue.FindValue('published_at').Value;
+  tag_name    := RESTResponse.JSONValue.FindValue('tag_name').Value;
+  s_temp      := RESTResponse.JSONValue.FindValue('published_at').Value;
+  s_temp      := ConvertGitHubDateToDateTime(s_temp);
+  DatePublish := StrToDateTime(s_temp);
+  arProjectList[ProjectIndex].LastChecked := Date + Time;
 
-  // ****** проверка версии релиза; verifying release version ******
-  if arProjectList[ProjectIndex].LastVersion = tag_name then
-  begin
-    s_temp := DateTimeToStr(Date + Time) + ' Новая версия релиза '
-           + arProjectList[ProjectIndex].ProjectName + ' не обнаружена.';
-    MessageBox(Handle, PChar(s_temp), PChar(CAPTION_MB), MB_ICONINFORMATION);
-    mmInfo.Lines.Add(s_temp);
-    mmInfo.Lines.Add('Проверка релиза завершина.');
-    exit;
-  end;
+  STFilters  := TStringList.Create;
+  STFilesURL := TStringList.Create;
+  try
 
-  s_temp := 'Oбнаружена новая версия ' + tag_name + ' релиза '
-            + arProjectList[ProjectIndex].ProjectName;
-  if MessageBox(Handle, PChar(s_temp),
+    // ****** проверка версии релиза; verifying release version ******
+    if arProjectList[ProjectIndex].LastVersion = tag_name then
+    begin
+      s_temp := DateTimeToStr(Date + Time) + ' Новая версия релиза '
+                + arProjectList[ProjectIndex].ProjectName + ' не обнаружена.';
+      MessageBox(Handle, PChar(s_temp), PChar(CAPTION_MB), MB_ICONINFORMATION);
+      mmInfo.Lines.Add(s_temp);
+      mmInfo.Lines.Add('Проверка релиза завершина.');
+      // FrmAddProject.SaveAddedNewProject(ProjectIndex);
+      exit;
+    end;
+
+    arProjectList[ProjectIndex].LastVersion  := tag_name;
+    arProjectList[ProjectIndex].DatePublish  := s_temp;
+    arProjectList[ProjectIndex].NewReleaseDT := Date + Time;
+
+    s_temp := 'Oбнаружена новая версия ' + tag_name + ' релиза '
+              + arProjectList[ProjectIndex].ProjectName
+              + #13#10 + #13#10 + 'Скачать новые файлы?'
+              + #13#10 + 'ДА - скачать, НЕТ - Нескачивать.';
+    if MessageBox(Handle, PChar(s_temp),
                 PChar(CAPTION_MB),
                 MB_ICONINFORMATION or MB_YESNO) = ID_NO then Exit;
 
-  // Получаю массив загруженных файлов; Getting an array of downloaded files
-  JSONArray := RESTResponse.JSONValue.FindValue('assets') as TJSONArray;
+
+    // Получаю массив загруженных файлов; Getting an array of downloaded files
+    JSONArray := RESTResponse.JSONValue.FindValue('assets') as TJSONArray;
   if JSONArray.Count = 0 then
   begin
     // message
     Exit;
   end;
 
-  STFilters  := TStringList.Create;
-  STFilesURL := TStringList.Create;
-  try
     // создание списка файлов для закачки; creating files list for downloasd
     for i := 0 to JSONArray.Count -1 do
       STFilesURL.Add(JSONArray.Items[i].FindValue('browser_download_url').Value);
@@ -507,6 +521,8 @@ begin
   finally
     STFilters.Free;
     STFilesURL.Free;
+    FrmAddProject.SaveAddedNewProject(ProjectIndex);
+    ProjectListUpdateVisible;
   end;
 
 end;
@@ -532,7 +548,7 @@ end;
 
 procedure TFrmMain.PM_OneProjectCheckClick(Sender: TObject);
 var
-  x: UInt16;
+  x: Word;
 begin
   x := GetProjectIndex(LVProj.Selected.Caption);
   mmInfo.Lines.Add(IntToStr(x));
@@ -556,7 +572,7 @@ end;
 procedure TFrmMain.ProjectListUpdateVisible;
 var
   i, x, len: Word;
-  dtl: TDateTime; //localized  date time
+  dt, dtl: TDateTime; //localized  date time
 begin
   LVProj.Items.Clear;
   len := Length(arProjectList);
@@ -578,7 +594,10 @@ begin
       SubItems[lv_date_last_check] := DateTimeToStr(arProjectList[i].LastChecked);
       SubItems[lv_Language]        := arProjectList[i].Language;
       SubItems[lv_project_url]     := arProjectList[i].ProjectUrl;
-      if arProjectList[i].NewRelease then ImageIndex := 1 else ImageIndex := 0;
+
+      dt := IncDay(arProjectList[i].NewReleaseDT, GL_NewReleasesLive);
+      if dt < Date + Time then ImageIndex := 0 else ImageIndex := 1;
+
     end;
   end;
   LVProj.Items.EndUpdate;
