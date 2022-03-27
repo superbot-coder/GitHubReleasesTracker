@@ -19,23 +19,6 @@ object FrmMain: TFrmMain
     619)
   PixelsPerInch = 96
   TextHeight = 13
-  object Label1: TLabel
-    Left = 136
-    Top = 456
-    Width = 35
-    Height = 13
-    Anchors = [akLeft, akBottom]
-    Caption = #1057#1090#1080#1083#1080':'
-  end
-  object cbxVclStyles: TComboBox
-    Left = 176
-    Top = 450
-    Width = 145
-    Height = 21
-    Anchors = [akLeft, akBottom]
-    TabOrder = 0
-    OnChange = cbxVclStylesChange
-  end
   object LVProj: TListView
     Left = 8
     Top = 16
@@ -93,26 +76,26 @@ object FrmMain: TFrmMain
     ParentFont = False
     PopupMenu = PopupMenu
     SmallImages = ImageListProj
-    TabOrder = 1
+    TabOrder = 0
     ViewStyle = vsReport
     OnColumnClick = LVProjColumnClick
   end
   object mmInfo: TMemo
     Left = 8
-    Top = 488
+    Top = 472
     Width = 1049
-    Height = 121
+    Height = 137
     Anchors = [akLeft, akRight, akBottom]
     ScrollBars = ssVertical
-    TabOrder = 2
+    TabOrder = 1
   end
   object BtnTest: TButton
-    Left = 24
-    Top = 448
+    Left = 8
+    Top = 440
     Width = 75
     Height = 25
     Caption = 'T E S T'
-    TabOrder = 3
+    TabOrder = 2
     OnClick = BtnTestClick
   end
   object MainMenu: TMainMenu
@@ -123,6 +106,13 @@ object FrmMain: TFrmMain
       object MM_AddReleases: TMenuItem
         Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1087#1088#1086#1077#1082#1090
         OnClick = MM_AddReleasesClick
+      end
+    end
+    object Y1: TMenuItem
+      Caption = #1055#1072#1088#1072#1084#1077#1090#1088#1099
+      object MM_Settings: TMenuItem
+        Caption = #1053#1072#1089#1090#1088#1086#1081#1082#1080
+        OnClick = MM_SettingsClick
       end
     end
   end

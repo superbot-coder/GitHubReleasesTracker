@@ -21,7 +21,7 @@ type
     ImagProject: TImage;
     LblAvatar: TLabel;
     BtnApply: TButton;
-    SpeedButton1: TSpeedButton;
+    SpdBtnOpenDir: TSpeedButton;
     edSaveDir: TEdit;
     RGRulesNotis: TRadioGroup;
     RGRuleDownload: TRadioGroup;
@@ -40,7 +40,7 @@ type
     procedure edProjectLinkChange(Sender: TObject);
     procedure SaveAddedNewProject(Index: Integer);
     function CheckProjectExistes(URL: String): boolean;
-    procedure SpeedButton1Click(Sender: TObject);
+    procedure SpdBtnOpenDirClick(Sender: TObject);
   private
     { Private declarations }
     FApiProject         : string;
@@ -208,7 +208,7 @@ begin
   end;
 end;
 
-procedure TFrmAddProject.SpeedButton1Click(Sender: TObject);
+procedure TFrmAddProject.SpdBtnOpenDirClick(Sender: TObject);
 var
   SelDir: String;
 begin
@@ -237,7 +237,8 @@ begin
   if Not AnsiContainsStr(AnsiLowerCase(edProjectLink.Text), 'https://') then
     edProjectLink.Text := 'https://' + edProjectLink.Text;
 
-  // Проверяю что проек уже добавлен в список
+  // Проверяю что проект уже добавлен в список
+  // Checking that the project has already been added to the list
   if CheckProjectExistes(edProjectLink.Text) then
   begin
     MessageBox(Handle, PChar('Такой проек уже добавлен в список..'),
@@ -281,7 +282,6 @@ begin
     // Получаю полное имя проекта; Getting full name the project
     FFullName := RESTResponse.JSONValue.FindValue('full_name').Value;
     // Заменяю символ "/" на "_" ;
-    //FFullName := StringReplace(FFullName, '/', '_', [rfReplaceAll, rfIgnoreCase]);
     mm.Lines.Add('Название проекта: ' + FProjectName);
 
     // Получаю URL аватарки проекта; Getting the avatar URL of the project
@@ -295,7 +295,7 @@ begin
     if edSaveDir.Text <> '' then
       FProgectDir := edSaveDir.Text
     else
-      FProgectDir := GLProjectsPath + StringReplace(FFullName, '/', '_', [rfReplaceAll, rfIgnoreCase]);
+      FProgectDir := GLProjectsDir + PathDelim +  StringReplace(FFullName, '/', '_', [rfReplaceAll, rfIgnoreCase]);
     if Not DirectoryExists(FProgectDir) then ForceDirectories(FProgectDir);
 
     // Скачиваю файл аватарки; Downloading avatarka file
@@ -371,7 +371,6 @@ begin
     LastChecked     := Date + Time;
     RuleDownload    := RGRuleDownload.ItemIndex;
     RuleNotis       := RGRulesNotis.ItemIndex;
-    //NewRelease      := true;
     NewReleaseDT    := Date + Time;
   end;
 

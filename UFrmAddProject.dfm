@@ -23,13 +23,13 @@ object FrmAddProject: TFrmAddProject
     Height = 13
     Caption = 'C'#1089#1099#1083#1082#1072' '#1087#1088#1086#1077#1082#1090#1072' '#1085#1072' GitHub: '
   end
-  object SpeedButton1: TSpeedButton
+  object SpdBtnOpenDir: TSpeedButton
     Left = 440
     Top = 104
     Width = 23
     Height = 22
     Caption = '...'
-    OnClick = SpeedButton1Click
+    OnClick = SpdBtnOpenDirClick
   end
   object edProjectLink: TEdit
     Left = 16

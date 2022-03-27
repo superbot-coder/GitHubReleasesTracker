@@ -49,11 +49,11 @@ type
     PM_DeletProject: TMenuItem;
     TimerTracker: TTimer;
     PM_OneProjectCheck: TMenuItem;
-    cbxVclStyles: TComboBox;
     LVProj: TListView;
-    Label1: TLabel;
     mmInfo: TMemo;
     BtnTest: TButton;
+    Y1: TMenuItem;
+    MM_Settings: TMenuItem;
     procedure MM_AddReleasesClick(Sender: TObject);
     function AddItems: Integer;
     procedure FormCreate(Sender: TObject);
@@ -72,8 +72,7 @@ type
     procedure PM_OneProjectCheckClick(Sender: TObject);
     procedure BtnTestClick(Sender: TObject);
     function ConvertGitHubDateToDateTime(GitDateTime: String): String;
-    procedure cbxVclStylesChange(Sender: TObject);
-
+    procedure MM_SettingsClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -81,16 +80,19 @@ type
   end;
 
 var
-  FrmMain        : TFrmMain;
-  CurrDir        : string;
-  CurrPath       : string;
-  TEMP           : string;
-  ConfigDir      : string;
-  FileConfig     : string;
-  GLProjectsPath : String;
-  arProjectList  : array of TProjectListRec;
-  GMT            : ShortInt; // Часовой пояс
-  GL_NewReleasesLive : Byte;
+  FrmMain           : TFrmMain;
+  CurrDir           : string;
+  CurrPath          : string;
+  TEMP              : string;
+  ConfigDir         : string;
+  FileConfig        : string;
+  GLProjectsDir     : String;
+  GLDefProjectsDir  : string;
+  GLStyleName       : String;
+  arProjectList     : array of TProjectListRec;
+  GMT               : ShortInt; // Часовой пояс
+  GLNewReleasesLive : Byte;
+
 
 Const
   CAPTION_MB = 'GitHub Releases Tracker';
@@ -99,6 +101,8 @@ Const
   lv_date_last_check  = 2;
   lv_Language         = 3;
   lv_project_url      = 4;
+  c_def_style         = 'Amethyst Kamri';
+  c_def_releases_live = 72;
   // ALL_PROJECT_DIR = 'GitHubReleasesTracker';
 
 implementation
@@ -155,11 +159,6 @@ begin
   mmInfo.Lines.Add(DateTimeToStr(Date + Time)  + ' ' + StrMsg);
 end;
 
-procedure TFrmMain.cbxVclStylesChange(Sender: TObject);
-begin
-  TStyleManager.SetStyle(cbxVclStyles.Text);
-end;
-
 function TFrmMain.ConvertGitHubDateToDateTime(GitDateTime: String): String;
 var
   fs: TFormatSettings;
@@ -176,28 +175,25 @@ procedure TFrmMain.FormCreate(Sender: TObject);
 var
   b: UInt8;
   tz: TTimeZoneInformation;
-  StyleName: string;
 begin
   GetTimeZoneInformation(tz);
-  GL_NewReleasesLive := 3;
-  GMT      := tz.Bias div -60;
-  Caption  := CAPTION_MB;
-  CurrDir  := ExtractFileDir(Application.ExeName);
-  CurrPath := CurrDir + PathDelim;
-  TEMP     := GetEnvironmentVariable('TEMP');
-  GLProjectsPath := GetEnvironmentVariable('USERPROFILE');
-  GLProjectsPath := GLProjectsPath + '\Downloads\GitHubReleasesTracker\';
-  ConfigDir      := GetEnvironmentVariable('APPDATA') + '\GitHubReleasesTracker';
-  FileConfig     := ConfigDir + '\Config.ini';
+  GMT        := tz.Bias div -60;
+  Caption    := CAPTION_MB;
+  CurrDir    := ExtractFileDir(Application.ExeName);
+  CurrPath   := CurrDir + PathDelim;
+  TEMP       := GetEnvironmentVariable('TEMP');
+  ConfigDir  := GetEnvironmentVariable('APPDATA') + '\GitHubReleasesTracker';
+  FileConfig := ConfigDir + '\Config.ini';
+  GLDefProjectsDir := GetEnvironmentVariable('USERPROFILE') + '\Downloads\GitHubReleasesTracker';
+
   LoadConfigAndProjectList(loadAllConfig);
   ProjectListUpdateVisible;
   for b := 0 to Length(ArSortColumnsPos) -1 do ArSortColumnsPos[b] := stASC;
 
-  for StyleName in TStyleManager.StyleNames do cbxVclStyles.Items.Add(StyleName);
-  cbxVclStyles.Text := 'Amethyst Kamri';
-  TStyleManager.SetStyle(cbxVclStyles.Items[4]);
-  TStyleManager.SetStyle('Amethyst Kamri');
+  if GLProjectsDir = '' then GLProjectsDir := GLDefProjectsDir;
 
+  TStyleManager.SetStyle(GLStyleName);
+  //TStyleManager.SetStyle('Amethyst Kamri');
 end;
 
 function TFrmMain.GetProjectIndex(ProjectName: string): Integer;
@@ -260,17 +256,21 @@ begin
 
   ST  := TStringList.Create;
   INI := TIniFile.Create(FileConfig);
-
-  // Загрузка секции настройки программы
-  if LoadConfigType <> loadProjList then 
-  begin 
-    // .... 
-  end;
-
-  // Загрузка списка проектов PROJECT_LIST
-  Section := 'PROJECT_LIST';
-  LVProj.Clear;
   try
+
+    // Загрузка секции настройки программы
+    if LoadConfigType = loadAllConfig then
+    begin
+      Section       := 'SETTINGS';
+      GLProjectsDir := INI.ReadString(Section, 'DefaultProjectDir','');
+      GLStyleName   := INI.ReadString(Section, 'StyleName', c_def_style);
+      GLNewReleasesLive := INI.ReadInteger(Section, 'NewReleasesLive', c_def_releases_live);
+    end;
+
+    // Загрузка списка проектов PROJECT_LIST
+
+    LVProj.Clear;
+    Section := 'PROJECT_LIST';
     INI.ReadSubSections(Section, ST, false);
     arProjectList := Nil;
     SetLength(arProjectList, ST.Count);
@@ -322,6 +322,11 @@ begin
     SubItems[lv_Language]        := arProjectList[i].Language;
     SubItems[lv_project_url]     := arProjectList[i].ProjectUrl;
   end;
+end;
+
+procedure TFrmMain.MM_SettingsClick(Sender: TObject);
+begin
+  FrmSettings.ShowModal;
 end;
 
 procedure TFrmMain.OneProjectCheck(ProjectIndex: Integer);
@@ -543,7 +548,6 @@ begin
   finally
     INI.Free;
   end;
-
 end;
 
 procedure TFrmMain.PM_OneProjectCheckClick(Sender: TObject);
@@ -595,7 +599,7 @@ begin
       SubItems[lv_Language]        := arProjectList[i].Language;
       SubItems[lv_project_url]     := arProjectList[i].ProjectUrl;
 
-      dt := IncDay(arProjectList[i].NewReleaseDT, GL_NewReleasesLive);
+      dt := IncHour(arProjectList[i].NewReleaseDT, GLNewReleasesLive);
       if dt < Date + Time then ImageIndex := 0 else ImageIndex := 1;
 
     end;
@@ -673,7 +677,6 @@ begin
     ArSortColumnsPos[Column.Index] := stDESC
   else
     ArSortColumnsPos[Column.Index] := stASC;
-
 end;
 
 procedure TFrmMain.TimerTrackerTimer(Sender: TObject);
