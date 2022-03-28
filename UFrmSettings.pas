@@ -27,15 +27,19 @@ type
     procedure cbxVclStylesSelect(Sender: TObject);
     procedure SaveSettings;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure FormShowInit;
   private
     { Private declarations }
+    FBackUpStyle: string;
   public
+    Applay: Boolean;
     { Public declarations }
   end;
 
 var
   FrmSettings: TFrmSettings;
-  SaveBackStyle: string;
+  //FBackUpStyle: string;
+  cnt: integer;
 
 implementation
 
@@ -45,6 +49,7 @@ USES UFrmMain;
 
 procedure TFrmSettings.BtnApplayClick(Sender: TObject);
 begin
+  Applay := true;
   SaveSettings;
   Close;
 end;
@@ -56,16 +61,15 @@ end;
 
 procedure TFrmSettings.cbxVclStylesSelect(Sender: TObject);
 begin
-  SaveBackStyle := TStyleManager.ActiveStyle.Name;
   TStyleManager.SetStyle(cbxVclStyles.Items[cbxVclStyles.ItemIndex]);
 end;
 
 procedure TFrmSettings.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  if SaveBackStyle <> TStyleManager.ActiveStyle.Name then
+  if (FBackUpStyle <> TStyleManager.ActiveStyle.Name) and (Not Applay) then
   begin
-    cbxVclStyles.ItemIndex := cbxVclStyles.Items.IndexOf(SaveBackStyle);
-    TStyleManager.SetStyle(SaveBackStyle);
+    cbxVclStyles.ItemIndex := cbxVclStyles.Items.IndexOf(FBackUpStyle);
+    TStyleManager.SetStyle(FBackUpStyle);
   end;
 end;
 
@@ -75,16 +79,21 @@ var
   x: UInt16;
 begin
   EdDefaultProjectDir.Text := GLProjectsDir;
-
   for StyleName in TStyleManager.StyleNames do cbxVclStyles.Items.Add(StyleName);
   cbxVclStyles.ItemIndex := cbxVclStyles.Items.IndexOf(GLStyleName);
-  //cbxVclStyles.Text := GLStyleName; //'Amethyst Kamri';
 end;
 
 procedure TFrmSettings.FormKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
   if key = 27 then Close;
+end;
+
+procedure TFrmSettings.FormShowInit;
+begin
+  Applay := false;
+  FBackUpStyle := TStyleManager.ActiveStyle.Name;
+  ShowModal;
 end;
 
 procedure TFrmSettings.SaveSettings;

@@ -9,7 +9,7 @@ uses
   Data.Bind.Components, Data.Bind.ObjectScope, Vcl.StdCtrls,
   Vcl.ExtCtrls, Vcl.Imaging.pngimage, System.IniFiles,
   RESTContentTypeStr, System.JSON, System.IOUtils, System.StrUtils,
-  System.DateUtils, Vcl.Mask;
+  System.DateUtils, Vcl.Mask, Winapi.ShellAPI;
 
 type TSortType = (stASC, stDESC);
 type
@@ -54,6 +54,9 @@ type
     BtnTest: TButton;
     Y1: TMenuItem;
     MM_Settings: TMenuItem;
+    PM_OpenDir: TMenuItem;
+    N1: TMenuItem;
+    PM_OpenUrl: TMenuItem;
     procedure MM_AddReleasesClick(Sender: TObject);
     function AddItems: Integer;
     procedure FormCreate(Sender: TObject);
@@ -73,6 +76,8 @@ type
     procedure BtnTestClick(Sender: TObject);
     function ConvertGitHubDateToDateTime(GitDateTime: String): String;
     procedure MM_SettingsClick(Sender: TObject);
+    procedure PM_OpenDirClick(Sender: TObject);
+    procedure PM_OpenUrlClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -192,8 +197,8 @@ begin
 
   if GLProjectsDir = '' then GLProjectsDir := GLDefProjectsDir;
 
+  if Not AnsiMatchStr(GLStyleName, TStyleManager.StyleNames) Then GLStyleName := 'Windows';
   TStyleManager.SetStyle(GLStyleName);
-  //TStyleManager.SetStyle('Amethyst Kamri');
 end;
 
 function TFrmMain.GetProjectIndex(ProjectName: string): Integer;
@@ -326,7 +331,7 @@ end;
 
 procedure TFrmMain.MM_SettingsClick(Sender: TObject);
 begin
-  FrmSettings.ShowModal;
+  FrmSettings.FormShowInit;
 end;
 
 procedure TFrmMain.OneProjectCheck(ProjectIndex: Integer);
@@ -383,11 +388,12 @@ begin
     // ****** проверка версии релиза; verifying release version ******
     if arProjectList[ProjectIndex].LastVersion = tag_name then
     begin
-      s_temp := DateTimeToStr(Date + Time) + ' Новая версия релиза '
-                + arProjectList[ProjectIndex].ProjectName + ' не обнаружена.';
+      s_temp := 'Имя проекта: ' +arProjectList[ProjectIndex].ProjectName + #13#10 +
+                'Новый релиз не обнаружен' + #13#10 +
+                'Проверка релиза завершена.' ;
       MessageBox(Handle, PChar(s_temp), PChar(CAPTION_MB), MB_ICONINFORMATION);
-      mmInfo.Lines.Add(s_temp);
-      mmInfo.Lines.Add('Проверка релиза завершина.');
+      mmInfo.Lines.Add('[' + DateTimeToStr(Date + Time) + ']' + #13#10 + s_temp);
+      // mmInfo.Lines.Add('Проверка релиза завершена.');
       // FrmAddProject.SaveAddedNewProject(ProjectIndex);
       exit;
     end;
@@ -396,10 +402,10 @@ begin
     arProjectList[ProjectIndex].DatePublish  := s_temp;
     arProjectList[ProjectIndex].NewReleaseDT := Date + Time;
 
-    s_temp := 'Oбнаружена новая версия ' + tag_name + ' релиза '
-              + arProjectList[ProjectIndex].ProjectName
-              + #13#10 + #13#10 + 'Скачать новые файлы?'
-              + #13#10 + 'ДА - скачать, НЕТ - Нескачивать.';
+    s_temp := 'Oбнаружен новый релиз: ' + tag_name + #13#10 +
+              'Название проекта: ' + arProjectList[ProjectIndex].ProjectName + #13#10 + #13#10 +
+              'Скачать новые файлы?' + #13#10 +
+              'ДА - скачать, НЕТ - Не скачивать';
     if MessageBox(Handle, PChar(s_temp),
                 PChar(CAPTION_MB),
                 MB_ICONINFORMATION or MB_YESNO) = ID_NO then Exit;
@@ -452,7 +458,6 @@ begin
       // Использую фильтр "Исключить"; Use the filter "Exclude"
       s_temp := StringReplace(arProjectList[ProjectIndex].FilterExclude, ' ', '', [rfReplaceAll]);
       STFilters.Text := StringReplace(s_temp, ',', #13, [rfReplaceAll]);
-      //ShowMessage(STFilters.Text);
 
       cnt := 0;
       while STFilesURL.Count <> cnt do
@@ -487,13 +492,13 @@ begin
       DownloadDir := arProjectList[ProjectIndex].ProjectDir;
     if Not DirectoryExists(DownloadDir) then ForceDirectories(DownloadDir);
 
-    // mmInfo.Lines.Add('DownloadDir=' + DownloadDir);
+    //mmInfo.Lines.Add(STFilesURL.text);
 
     for i:=0 to STFilesURL.Count -1 do
     begin
 
       RESTResponse.RootElement := '';
-      RESTClient.Accept        := ''; //'application/zip';
+      RESTClient.Accept        := 'application'; //'application/zip';
       RESTClient.BaseURL       := STFilesURL.Strings[i];
       RESTRequest.Execute;
 
@@ -555,8 +560,29 @@ var
   x: Word;
 begin
   x := GetProjectIndex(LVProj.Selected.Caption);
-  mmInfo.Lines.Add(IntToStr(x));
   OneProjectCheck(x);
+end;
+
+procedure TFrmMain.PM_OpenDirClick(Sender: TObject);
+var
+  x: Word;
+  ProjDir: string;
+begin
+  if LVProj.SelCount = 0 then exit;
+  x := GetProjectIndex(LVProj.Selected.Caption);
+  ProjDir := arProjectList[x].ProjectDir;
+  if arProjectList[x].NeedSubDir then
+    if DirectoryExists(ProjDir + '\' +arProjectList[x].LastVersion) then
+      ProjDir := ProjDir + '\' +arProjectList[x].LastVersion;
+  ShellExecute(Handle, PChar('Open'), PChar(ProjDir),Nil, Nil, SW_SHOWNORMAL);
+end;
+
+procedure TFrmMain.PM_OpenUrlClick(Sender: TObject);
+begin
+  if LVProj.SelCount = 0 then exit;
+  ShellExecute(Handle, PChar('Open'),
+               PChar(arProjectList[GetProjectIndex(LVProj.Selected.Caption)].ProjectUrl),
+               Nil, Nil, SW_SHOWMAXIMIZED);
 end;
 
 procedure TFrmMain.PopupMenuPopup(Sender: TObject);

@@ -58,6 +58,7 @@ object FrmSettings: TFrmSettings
     Top = 312
     Width = 129
     Height = 25
+    Cancel = True
     Caption = #1055#1056#1048#1052#1045#1053#1048#1058#1068
     TabOrder = 0
     OnClick = BtnApplayClick
@@ -94,7 +95,7 @@ object FrmSettings: TFrmSettings
   object cbxVclStyles: TComboBox
     Left = 120
     Top = 204
-    Width = 145
+    Width = 217
     Height = 24
     Anchors = [akLeft, akBottom]
     TabOrder = 4
