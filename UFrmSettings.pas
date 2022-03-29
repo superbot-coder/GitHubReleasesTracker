@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.Buttons, Vcl.FileCtrl,
-  Vcl.Samples.Spin, System.IniFiles, Vcl.Themes;
+  Vcl.Samples.Spin, System.IniFiles, Vcl.Themes, System.StrUtils, BrightDarkSideStyles;
 
 type
   TFrmSettings = class(TForm)
@@ -62,6 +62,9 @@ end;
 procedure TFrmSettings.cbxVclStylesSelect(Sender: TObject);
 begin
   TStyleManager.SetStyle(cbxVclStyles.Items[cbxVclStyles.ItemIndex]);
+  if AnsiMatchStr(cbxVclStyles.Items[cbxVclStyles.ItemIndex], arDarkStyles) then
+    GLStyleIcon := 2 else GLStyleIcon := 0;
+  FrmMain.ProjectListUpdateVisible;
 end;
 
 procedure TFrmSettings.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -70,6 +73,8 @@ begin
   begin
     cbxVclStyles.ItemIndex := cbxVclStyles.Items.IndexOf(FBackUpStyle);
     TStyleManager.SetStyle(FBackUpStyle);
+    if AnsiMatchStr(FBackUpStyle, arDarkStyles) then GLStyleIcon := 2 else GLStyleIcon := 0;
+    FrmMain.ProjectListUpdateVisible;
   end;
 end;
 
@@ -101,6 +106,7 @@ var
   INI: TIniFile;
   Section: String;
 begin
+  if Not DirectoryExists(ConfigDir) then ForceDirectories(ConfigDir);
   INI := TIniFile.Create(FileConfig);
   Section := 'SETTINGS';
   try

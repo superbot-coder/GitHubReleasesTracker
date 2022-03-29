@@ -92,7 +92,7 @@ object FrmMain: TFrmMain
   object BtnTest: TButton
     Left = 8
     Top = 440
-    Width = 75
+    Width = 121
     Height = 25
     Caption = 'T E S T'
     TabOrder = 2
@@ -761,6 +761,10 @@ object FrmMain: TFrmMain
       Caption = #1054#1090#1082#1088#1099#1090#1100' '#1074#1077#1073' '#1089#1090#1088#1072#1085#1080#1094#1091' '#1087#1088#1086#1077#1082#1090#1072
       SubMenuImages = ImageListProj
       OnClick = PM_OpenUrlClick
+    end
+    object PP_EditItemSettings: TMenuItem
+      Caption = #1056#1077#1076#1072#1082#1090#1080#1088#1086#1074#1072#1090#1100' '#1085#1072#1089#1090#1088#1086#1081#1082#1080' '#1101#1083#1077#1084#1077#1085#1090#1072
+      OnClick = PP_EditItemSettingsClick
     end
     object N1: TMenuItem
       Caption = '-'

@@ -12,8 +12,10 @@ object FrmAddProject: TFrmAddProject
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
+  KeyPreview = True
   OldCreateOrder = False
   Position = poScreenCenter
+  OnKeyDown = FormKeyDown
   PixelsPerInch = 96
   TextHeight = 13
   object LblUrlProject: TLabel
@@ -67,7 +69,7 @@ object FrmAddProject: TFrmAddProject
     Top = 176
     Width = 281
     Height = 17
-    Caption = #1057#1082#1072#1095#1072#1090#1100' '#1087#1086#1089#1083#1077#1076#1085#1080#1081' '#1088#1077#1083#1080#1079' '#1087#1088#1080' '#1076#1086#1073#1072#1074#1083#1077#1085#1085#1080' '#1087#1088#1086#1077#1082#1090#1072
+    Caption = #1057#1082#1072#1095#1072#1090#1100' '#1092#1072#1081#1083#1099' '#1088#1077#1083#1080#1079#1072' '#1087#1086#1089#1083#1077' '#1076#1086#1073#1072#1074#1083#1077#1085#1080#1103' '#1087#1088#1086#1077#1082#1090#1072
     TabOrder = 3
   end
   object mm: TMemo
@@ -75,8 +77,6 @@ object FrmAddProject: TFrmAddProject
     Top = 376
     Width = 553
     Height = 89
-    Lines.Strings = (
-      'mm')
     TabOrder = 4
   end
   object Panel: TPanel
@@ -107,7 +107,7 @@ object FrmAddProject: TFrmAddProject
     Left = 216
     Top = 472
     Width = 145
-    Height = 33
+    Height = 30
     Caption = #1044' '#1054' '#1041' '#1040' '#1042' '#1048' '#1058' '#1068
     TabOrder = 6
     OnClick = BtnApplyClick
@@ -181,5 +181,14 @@ object FrmAddProject: TFrmAddProject
       TabOrder = 1
       Text = 'mac, linux, 32bit'
     end
+  end
+  object BtnClose: TButton
+    Left = 472
+    Top = 472
+    Width = 97
+    Height = 30
+    Caption = #1047#1040#1050#1056#1067#1058#1068
+    TabOrder = 11
+    OnClick = BtnCloseClick
   end
 end

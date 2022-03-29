@@ -5,6 +5,7 @@
 **Project status:** Currently in active development
 
 ![Screenshot](https://github.com/superbot-coder/GitHubReleasesTracker/blob/main/ScreenShot_01.PNG "")
+![Screenshot](https://github.com/superbot-coder/GitHubReleasesTracker/blob/main/ScreenShot_02.PNG "")
 
  ---
 **Требования для компиляции и зависимости:**

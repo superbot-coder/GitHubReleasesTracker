@@ -97,6 +97,7 @@ object FrmSettings: TFrmSettings
     Top = 204
     Width = 217
     Height = 24
+    Style = csDropDownList
     Anchors = [akLeft, akBottom]
     TabOrder = 4
     OnSelect = cbxVclStylesSelect

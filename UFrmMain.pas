@@ -9,7 +9,7 @@ uses
   Data.Bind.Components, Data.Bind.ObjectScope, Vcl.StdCtrls,
   Vcl.ExtCtrls, Vcl.Imaging.pngimage, System.IniFiles,
   RESTContentTypeStr, System.JSON, System.IOUtils, System.StrUtils,
-  System.DateUtils, Vcl.Mask, Winapi.ShellAPI;
+  System.DateUtils, Vcl.Mask, Winapi.ShellAPI, BrightDarkSideStyles;
 
 type TSortType = (stASC, stDESC);
 type
@@ -57,6 +57,7 @@ type
     PM_OpenDir: TMenuItem;
     N1: TMenuItem;
     PM_OpenUrl: TMenuItem;
+    PP_EditItemSettings: TMenuItem;
     procedure MM_AddReleasesClick(Sender: TObject);
     function AddItems: Integer;
     procedure FormCreate(Sender: TObject);
@@ -78,6 +79,7 @@ type
     procedure MM_SettingsClick(Sender: TObject);
     procedure PM_OpenDirClick(Sender: TObject);
     procedure PM_OpenUrlClick(Sender: TObject);
+    procedure PP_EditItemSettingsClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -94,6 +96,7 @@ var
   GLProjectsDir     : String;
   GLDefProjectsDir  : string;
   GLStyleName       : String;
+  GLStyleIcon       : Byte;
   arProjectList     : array of TProjectListRec;
   GMT               : ShortInt; // Часовой пояс
   GLNewReleasesLive : Byte;
@@ -152,9 +155,9 @@ var i: byte;
 begin
   with LVProj.Items.Add do
   begin
-    Caption := ''; IntToStr(Index + 1);
-    Result  := Index;
-    ImageIndex := 0;
+    Caption    := '';
+    Result     := Index;
+    ImageIndex := GLStyleIcon;
     for i := 1 to 5 do SubItems.Add('');
   end;
 end;
@@ -192,13 +195,16 @@ begin
   GLDefProjectsDir := GetEnvironmentVariable('USERPROFILE') + '\Downloads\GitHubReleasesTracker';
 
   LoadConfigAndProjectList(loadAllConfig);
-  ProjectListUpdateVisible;
-  for b := 0 to Length(ArSortColumnsPos) -1 do ArSortColumnsPos[b] := stASC;
+
+  if Not AnsiMatchStr(GLStyleName, TStyleManager.StyleNames) Then GLStyleName := 'Windows';
+  if AnsiMatchStr(GLStyleName, arDarkStyles) then GLStyleIcon := 2 else GLStyleIcon := 0;
+  TStyleManager.SetStyle(GLStyleName);
 
   if GLProjectsDir = '' then GLProjectsDir := GLDefProjectsDir;
 
-  if Not AnsiMatchStr(GLStyleName, TStyleManager.StyleNames) Then GLStyleName := 'Windows';
-  TStyleManager.SetStyle(GLStyleName);
+  ProjectListUpdateVisible;
+  for b := 0 to Length(ArSortColumnsPos) -1 do ArSortColumnsPos[b] := stASC;
+
 end;
 
 function TFrmMain.GetProjectIndex(ProjectName: string): Integer;
@@ -316,6 +322,8 @@ var
 begin
   FrmAddProject.FrmShowInit;
   if Not FrmAddProject.Applay then Exit;
+  ProjectListUpdateVisible;
+  {
   i := Length(arProjectList)-1;
   x := AddItems;
   with LVProj.Items[x] do
@@ -327,6 +335,7 @@ begin
     SubItems[lv_Language]        := arProjectList[i].Language;
     SubItems[lv_project_url]     := arProjectList[i].ProjectUrl;
   end;
+  }
 end;
 
 procedure TFrmMain.MM_SettingsClick(Sender: TObject);
@@ -599,6 +608,12 @@ begin
   end;
 end;
 
+procedure TFrmMain.PP_EditItemSettingsClick(Sender: TObject);
+begin
+  if LVProj.SelCount = 0 then exit;
+  FrmAddProject.FormShowEdit(GetProjectIndex(LVProj.Selected.Caption));
+end;
+
 procedure TFrmMain.ProjectListUpdateVisible;
 var
   i, x, len: Word;
@@ -626,7 +641,7 @@ begin
       SubItems[lv_project_url]     := arProjectList[i].ProjectUrl;
 
       dt := IncHour(arProjectList[i].NewReleaseDT, GLNewReleasesLive);
-      if dt < Date + Time then ImageIndex := 0 else ImageIndex := 1;
+      if dt < Date + Time then ImageIndex := GLStyleIcon else ImageIndex := 1;
 
     end;
   end;
@@ -679,7 +694,8 @@ procedure TFrmMain.BtnTestClick(Sender: TObject);
 var
   s: string;
 begin
-  //
+  if AnsiMatchStr(GLStyleName, arDarkStyles) then ShowMessage('true')
+  else ShowMessage('false');
 end;
 
 procedure TFrmMain.LVProjColumnClick(Sender: TObject; Column: TListColumn);
