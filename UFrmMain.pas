@@ -117,7 +117,7 @@ implementation
 
 {$R *.dfm}
 
-Uses Vcl.Themes, UFrmAddProject, UFrmSettings;
+Uses Vcl.Themes, UFrmAddProject, UFrmSettings, UFrmDownloadFiles;
 
 Var
   ArSortColumnsPos: array[0..5] of TSortType;
@@ -419,14 +419,13 @@ begin
                 PChar(CAPTION_MB),
                 MB_ICONINFORMATION or MB_YESNO) = ID_NO then Exit;
 
-
     // Получаю массив загруженных файлов; Getting an array of downloaded files
     JSONArray := RESTResponse.JSONValue.FindValue('assets') as TJSONArray;
-  if JSONArray.Count = 0 then
-  begin
-    // message
-    Exit;
-  end;
+    if JSONArray.Count = 0 then
+    begin
+      // message
+      Exit;
+    end;
 
     // создание списка файлов для закачки; creating files list for downloasd
     for i := 0 to JSONArray.Count -1 do
@@ -694,8 +693,16 @@ procedure TFrmMain.BtnTestClick(Sender: TObject);
 var
   s: string;
 begin
-  if AnsiMatchStr(GLStyleName, arDarkStyles) then ShowMessage('true')
-  else ShowMessage('false');
+
+  RESTResponse.RootElement := '[0]';
+  RESTClient.Accept        := arContentTypeStr[ord(ctAPPLICATION_JSON)];
+  RESTClient.BaseURL       := arProjectList[0].ApiReleasesUrl;
+  RESTRequest.Execute;
+
+  if RESTResponse.StatusCode <> 200 then Exit;
+
+  FrmDownloadFiles.ShowInit(RESTResponse.JSONValue, 0);
+
 end;
 
 procedure TFrmMain.LVProjColumnClick(Sender: TObject; Column: TListColumn);

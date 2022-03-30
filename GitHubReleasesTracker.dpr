@@ -6,7 +6,8 @@ uses
   UFrmAddProject in 'UFrmAddProject.pas' {FrmAddProject},
   UFrmSettings in 'UFrmSettings.pas' {FrmSettings},
   Vcl.Themes,
-  Vcl.Styles;
+  Vcl.Styles,
+  UFrmDownloadFiles in 'UFrmDownloadFiles.pas' {FrmDownloadFiles};
 
 {$R *.res}
 
@@ -17,5 +18,6 @@ begin
   Application.CreateForm(TFrmMain, FrmMain);
   Application.CreateForm(TFrmAddProject, FrmAddProject);
   Application.CreateForm(TFrmSettings, FrmSettings);
+  Application.CreateForm(TFrmDownloadFiles, FrmDownloadFiles);
   Application.Run;
 end.
