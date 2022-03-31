@@ -15,13 +15,15 @@ object FrmDownloadFiles: TFrmDownloadFiles
   OldCreateOrder = False
   Position = poScreenCenter
   OnCreate = FormCreate
+  OnDestroy = FormDestroy
   PixelsPerInch = 96
   TextHeight = 13
   object LVFiles: TListView
-    Left = 8
-    Top = 72
-    Width = 521
-    Height = 329
+    Left = 0
+    Top = 97
+    Width = 542
+    Height = 224
+    Align = alTop
     Checkboxes = True
     Columns = <
       item
@@ -38,6 +40,7 @@ object FrmDownloadFiles: TFrmDownloadFiles
         Caption = #1057#1090#1072#1090#1091#1089
         Width = 100
       end>
+    HideSelection = False
     ReadOnly = True
     RowSelect = True
     SmallImages = ImageList
@@ -66,10 +69,75 @@ object FrmDownloadFiles: TFrmDownloadFiles
     Left = 0
     Top = 0
     Width = 542
-    Height = 65
+    Height = 97
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 3
+    object LblFilterInclude: TLabel
+      Left = 8
+      Top = 11
+      Width = 104
+      Height = 13
+      Caption = #1060#1080#1083#1100#1090#1088' "'#1042#1082#1083#1102#1095#1080#1090#1100'":'
+    end
+    object LblFilterExclude: TLabel
+      Left = 8
+      Top = 43
+      Width = 110
+      Height = 13
+      Caption = #1060#1080#1083#1100#1090#1088' "'#1048#1089#1082#1083#1102#1095#1080#1090#1100'":'
+    end
+    object EdFilterEnclude: TEdit
+      Left = 128
+      Top = 8
+      Width = 401
+      Height = 21
+      MaxLength = 1000
+      TabOrder = 0
+    end
+    object EdFilterExclude: TEdit
+      Left = 128
+      Top = 40
+      Width = 401
+      Height = 21
+      MaxLength = 1000
+      TabOrder = 1
+    end
+    object BtnApplyFilter: TButton
+      Left = 128
+      Top = 66
+      Width = 137
+      Height = 25
+      Caption = #1055#1088#1080#1084#1077#1085#1080#1090#1100' '#1092#1080#1083#1100#1090#1088
+      TabOrder = 2
+      OnClick = BtnApplyFilterClick
+    end
+    object BtnSelectAll: TButton
+      Left = 304
+      Top = 66
+      Width = 105
+      Height = 25
+      Caption = #1054#1090#1084#1077#1090#1080#1090#1100' '#1074#1089#1105
+      TabOrder = 3
+      OnClick = BtnSelectAllClick
+    end
+    object BtnDownAll: TButton
+      Left = 424
+      Top = 66
+      Width = 105
+      Height = 25
+      Caption = #1057#1073#1088#1086#1089#1080#1090#1100' '#1074#1089#1105
+      TabOrder = 4
+      OnClick = BtnDownAllClick
+    end
+  end
+  object mm: TMemo
+    Left = 8
+    Top = 328
+    Width = 529
+    Height = 73
+    ScrollBars = ssVertical
+    TabOrder = 4
   end
   object ImageList: TImageList
     ColorDepth = cd32Bit

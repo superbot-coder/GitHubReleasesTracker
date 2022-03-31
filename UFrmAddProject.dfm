@@ -4,8 +4,8 @@ object FrmAddProject: TFrmAddProject
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1085#1086#1074#1099#1081' '#1087#1088#1086#1077#1082#1090
-  ClientHeight = 511
-  ClientWidth = 590
+  ClientHeight = 551
+  ClientWidth = 587
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -15,6 +15,7 @@ object FrmAddProject: TFrmAddProject
   KeyPreview = True
   OldCreateOrder = False
   Position = poScreenCenter
+  OnCreate = FormCreate
   OnKeyDown = FormKeyDown
   PixelsPerInch = 96
   TextHeight = 13
@@ -38,6 +39,7 @@ object FrmAddProject: TFrmAddProject
     Top = 32
     Width = 441
     Height = 21
+    MaxLength = 1000
     TabOrder = 0
     Text = 'https://github.com/superbot-coder/chia_plotting_tools'
     OnChange = edProjectLinkChange
@@ -66,7 +68,7 @@ object FrmAddProject: TFrmAddProject
   end
   object ChBoxDownloadLastRelease: TCheckBox
     Left = 16
-    Top = 176
+    Top = 192
     Width = 281
     Height = 17
     Caption = #1057#1082#1072#1095#1072#1090#1100' '#1092#1072#1081#1083#1099' '#1088#1077#1083#1080#1079#1072' '#1087#1086#1089#1083#1077' '#1076#1086#1073#1072#1074#1083#1077#1085#1080#1103' '#1087#1088#1086#1077#1082#1090#1072
@@ -74,7 +76,7 @@ object FrmAddProject: TFrmAddProject
   end
   object mm: TMemo
     Left = 16
-    Top = 376
+    Top = 408
     Width = 553
     Height = 89
     TabOrder = 4
@@ -105,7 +107,7 @@ object FrmAddProject: TFrmAddProject
   end
   object BtnApply: TButton
     Left = 216
-    Top = 472
+    Top = 512
     Width = 145
     Height = 30
     Caption = #1044' '#1054' '#1041' '#1040' '#1042' '#1048' '#1058' '#1068
@@ -117,11 +119,12 @@ object FrmAddProject: TFrmAddProject
     Top = 104
     Width = 417
     Height = 21
+    MaxLength = 256
     TabOrder = 7
   end
   object RGRulesNotis: TRadioGroup
     Left = 344
-    Top = 160
+    Top = 176
     Width = 225
     Height = 121
     Caption = #1055#1088#1072#1074#1080#1083#1072':'
@@ -134,7 +137,7 @@ object FrmAddProject: TFrmAddProject
   end
   object RGRuleDownload: TRadioGroup
     Left = 16
-    Top = 208
+    Top = 224
     Width = 297
     Height = 73
     Caption = #1055#1088#1080#1074#1080#1083#1072' '#1089#1082#1072#1095#1080#1074#1072#1085#1080#1103' '#1092#1072#1081#1083#1086#1074
@@ -146,20 +149,20 @@ object FrmAddProject: TFrmAddProject
   end
   object GrBoxFilter: TGroupBox
     Left = 16
-    Top = 288
+    Top = 312
     Width = 553
     Height = 81
     Caption = #1060#1080#1083#1100#1090#1088' ('#1074#1087#1080#1096#1080#1090#1077' '#1089#1083#1086#1074#1072' '#1095#1077#1088#1077#1079' '#1079#1072#1087#1103#1090#1091#1102'):'
     TabOrder = 10
     object LblExclude: TLabel
-      Left = 280
+      Left = 272
       Top = 28
       Width = 61
       Height = 13
       Caption = #1048#1089#1082#1083#1102#1095#1080#1090#1100':'
     end
     object LblInclude: TLabel
-      Left = 16
+      Left = 8
       Top = 28
       Width = 55
       Height = 13
@@ -184,11 +187,19 @@ object FrmAddProject: TFrmAddProject
   end
   object BtnClose: TButton
     Left = 472
-    Top = 472
+    Top = 512
     Width = 97
     Height = 30
     Caption = #1047#1040#1050#1056#1067#1058#1068
     TabOrder = 11
     OnClick = BtnCloseClick
+  end
+  object ChBoxAddVerToFileName: TCheckBox
+    Left = 16
+    Top = 168
+    Width = 249
+    Height = 17
+    Caption = #1055#1088#1080#1073#1072#1074#1083#1103#1090#1100' '#1082' '#1080#1084#1077#1085#1080' '#1092#1072#1081#1083#1072' '#1074#1077#1088#1089#1080#1102' '#1088#1077#1083#1080#1079#1072
+    TabOrder = 12
   end
 end

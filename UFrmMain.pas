@@ -32,6 +32,7 @@ type
     RuleNotis      : UInt8;
     NeedSubDir     : Boolean;
     NewReleaseDT   : TDateTime;
+    AddVerToFileName: Boolean;
   End;
 
 type TLoadConfigsType = (loadAllConfig, loadProjList); 
@@ -308,6 +309,7 @@ begin
         RuleNotis       := INI.ReadInteger(SubSection, 'RuleNotis', 0);
         NeedSubDir      := INI.ReadBool(SubSection, 'NeedSubDir', true);
         NewReleaseDT    := INI.ReadDateTime(SubSection, 'NewReleaseDT', 0);
+        AddVerToFileName:= INI.ReadBool(SubSection, 'AddVerToFileName', false);
       end;
     end;
   finally
@@ -518,14 +520,19 @@ begin
 
       SavedFileName := STFilesURL.Strings[i];
       Delete(SavedFileName, 1, LastDelimiter('/', SavedFileName));
+
+      if arProjectList[ProjectIndex].AddVerToFileName then
+        Insert('_' + tag_name, SavedFileName, LastDelimiter('.', SavedFileName) -1);
+
+      SavedFileName := DownloadDir + '\' + SavedFileName;
+
+      {
       if arProjectList[ProjectIndex].NeedSubDir then
-        SavedFileName := DownloadDir + '\' + SavedFileName
+        SavedFileName := DownloadDir + '\' + tag_name + '\' + SavedFileName
       else
       begin
-        ext           := ExtractFileExt(SavedFileName);
-        SavedFileName := Copy(SavedFileName, 1, length(SavedFileName)-length(ext));
-        SavedFileName := DownloadDir + '\' + SavedFileName + '_' + tag_name + ext;
-      end;
+        SavedFileName := DownloadDir + '\' + SavedFileName;
+      end;}
 
       TFile.WriteAllBytes(SavedFileName, RESTResponse.RawBytes);
 
@@ -678,7 +685,6 @@ begin
     begin
        if i = len-1 then
        begin
-         mmInfo.Lines.Add('i = len-1');
          setLength(arProjectList, len-1);
          Exit;
        end;
@@ -692,16 +698,17 @@ end;
 procedure TFrmMain.BtnTestClick(Sender: TObject);
 var
   s: string;
+  v: string;
 begin
 
-  RESTResponse.RootElement := '[0]';
-  RESTClient.Accept        := arContentTypeStr[ord(ctAPPLICATION_JSON)];
-  RESTClient.BaseURL       := arProjectList[0].ApiReleasesUrl;
-  RESTRequest.Execute;
+  //RESTResponse.RootElement := '[0]';
+  //RESTClient.Accept        := arContentTypeStr[ord(ctAPPLICATION_JSON)];
+  //RESTClient.BaseURL       := arProjectList[0].ApiReleasesUrl;
+  // RESTRequest.Execute;
 
-  if RESTResponse.StatusCode <> 200 then Exit;
+  //if RESTResponse.StatusCode <> 200 then Exit;
 
-  FrmDownloadFiles.ShowInit(RESTResponse.JSONValue, 0);
+  FrmDownloadFiles.ShowInit(Nil, 0);
 
 end;
 

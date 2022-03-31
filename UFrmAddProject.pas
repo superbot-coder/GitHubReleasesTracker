@@ -33,6 +33,7 @@ type
     LblExclude: TLabel;
     LblInclude: TLabel;
     BtnClose: TButton;
+    ChBoxAddVerToFileName: TCheckBox;
     procedure BtnApplyClick(Sender: TObject);
     function ConverLinkToApiLink(Link: String): String;
     Procedure AddProjectList;
@@ -47,6 +48,7 @@ type
     procedure FormShowEdit(ProjectIndex: integer);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure BtnCloseClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
     FApiProject         : string;
@@ -133,6 +135,14 @@ begin
   Result :=  copy(Result, x + 1, Length(Result) - x);
 end;
 
+procedure TFrmAddProject.FormCreate(Sender: TObject);
+begin
+  EdFilterInclude.MaxLength := 500;
+  edFilterExclude.MaxLength := 500;
+  edSaveDir.MaxLength       := 260;
+  edProjectLink.MaxLength   := 500;
+end;
+
 procedure TFrmAddProject.FormKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
@@ -168,11 +178,11 @@ begin
   edSaveDir.Text        := '';
   BtnApply.Enabled      := False;
   BtnApply.Caption      := 'Д О Б А В И Т Ь';
-  ChBoxSubDir.Checked   := True;
   ImagProject.Picture   := Nil;
   RGRuleDownload.ItemIndex := 0;
   RGRulesNotis.ItemIndex   := 0;
-  ChBoxDownloadLastRelease.Checked := false;
+  ChBoxSubDir.Checked      := false;
+  ChBoxAddVerToFileName.Checked    := false;
   ChBoxDownloadLastRelease.Enabled := True;
   EdFilterInclude.Text := 'windows, win, win64, 64bit';
   edFilterExclude.Text := 'mac, linux, 32bit';
@@ -242,6 +252,7 @@ begin
       WriteInteger(Section, 'RuleNotis', arProjectList[Index].RuleNotis);
       WriteBool(Section, 'NeedSubDir', arProjectList[Index].NeedSubDir);
       WriteDateTime(Section, 'NewReleaseDT', arProjectList[Index].NewReleaseDT);
+      WriteBool(Section, 'AddVerToFileName', arProjectList[Index].AddVerToFileName);
     end;
   finally
     INI.Free;
@@ -273,6 +284,7 @@ begin
       RuleNotis     := RGRulesNotis.ItemIndex;
       FilterInclude := EdFilterInclude.Text;
       FilterExclude := edFilterExclude.Text;
+      AddVerToFileName := ChBoxAddVerToFileName.Checked;
     end;
     SaveAddedNewProject(FProjectIndex);
   end;
@@ -350,7 +362,8 @@ begin
       if edSaveDir.Text <> '' then
         FProgectDir := edSaveDir.Text
       else
-        FProgectDir := GLProjectsDir + PathDelim +  StringReplace(FFullName, '/', '_', [rfReplaceAll, rfIgnoreCase]);
+        FProgectDir := GLProjectsDir + PathDelim +
+                       StringReplace(FFullName, '/', '_', [rfReplaceAll, rfIgnoreCase]);
       if Not DirectoryExists(FProgectDir) then ForceDirectories(FProgectDir);
 
       // Скачиваю файл аватарки; Downloading avatarka file
@@ -410,23 +423,24 @@ begin
     SetLength(arProjectList, Length(arProjectList) + 1);
     with arProjectList[Length(arProjectList) - 1] do
     begin
-      ProjectUrl      := edProjectLink.Text;
-      ProjectDir      := FProgectDir;
-      ApiProjectUrl   := FApiProject;
-      ApiReleasesUrl  := FApiReleases;
-      ProjectName     := FProjectName;
-      FullProjectName := FFullName;
-      AvatarFile      := FAvatarFileName;
-      AvatarUrl       := FAvatar_url;
-      FilterInclude   := EdFilterInclude.Text;
-      FilterExclude   := edFilterExclude.Text;
-      DatePublish     := FPublishRelease;
-      Language        := FLanguage;
-      LastVersion     := FLastReleaseVersion;
-      LastChecked     := Date + Time;
-      RuleDownload    := RGRuleDownload.ItemIndex;
-      RuleNotis       := RGRulesNotis.ItemIndex;
-      NewReleaseDT    := Date + Time;
+      ProjectUrl       := edProjectLink.Text;
+      ProjectDir       := FProgectDir;
+      ApiProjectUrl    := FApiProject;
+      ApiReleasesUrl   := FApiReleases;
+      ProjectName      := FProjectName;
+      FullProjectName  := FFullName;
+      AvatarFile       := FAvatarFileName;
+      AvatarUrl        := FAvatar_url;
+      FilterInclude    := EdFilterInclude.Text;
+      FilterExclude    := edFilterExclude.Text;
+      DatePublish      := FPublishRelease;
+      Language         := FLanguage;
+      LastVersion      := FLastReleaseVersion;
+      LastChecked      := Date + Time;
+      RuleDownload     := RGRuleDownload.ItemIndex;
+      RuleNotis        := RGRulesNotis.ItemIndex;
+      NewReleaseDT     := Date + Time;
+      AddVerToFileName := ChBoxAddVerToFileName.Checked;
     end;
 
     SaveAddedNewProject(Length(arProjectList) - 1);
