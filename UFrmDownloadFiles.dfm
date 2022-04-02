@@ -22,7 +22,7 @@ object FrmDownloadFiles: TFrmDownloadFiles
     Left = 0
     Top = 97
     Width = 542
-    Height = 224
+    Height = 304
     Align = alTop
     Checkboxes = True
     Columns = <
@@ -43,6 +43,7 @@ object FrmDownloadFiles: TFrmDownloadFiles
     HideSelection = False
     ReadOnly = True
     RowSelect = True
+    PopupMenu = PopupMenu
     SmallImages = ImageList
     TabOrder = 0
     ViewStyle = vsReport
@@ -87,7 +88,7 @@ object FrmDownloadFiles: TFrmDownloadFiles
       Height = 13
       Caption = #1060#1080#1083#1100#1090#1088' "'#1048#1089#1082#1083#1102#1095#1080#1090#1100'":'
     end
-    object EdFilterEnclude: TEdit
+    object EdFilterInclude: TEdit
       Left = 128
       Top = 8
       Width = 401
@@ -104,7 +105,7 @@ object FrmDownloadFiles: TFrmDownloadFiles
       TabOrder = 1
     end
     object BtnApplyFilter: TButton
-      Left = 128
+      Left = 312
       Top = 66
       Width = 137
       Height = 25
@@ -112,32 +113,15 @@ object FrmDownloadFiles: TFrmDownloadFiles
       TabOrder = 2
       OnClick = BtnApplyFilterClick
     end
-    object BtnSelectAll: TButton
-      Left = 304
+    object BtnSaveFilte: TButton
+      Left = 456
       Top = 66
-      Width = 105
+      Width = 75
       Height = 25
-      Caption = #1054#1090#1084#1077#1090#1080#1090#1100' '#1074#1089#1105
+      Caption = #1057#1086#1093#1088#1072#1085#1080#1090#1100' '
       TabOrder = 3
-      OnClick = BtnSelectAllClick
+      OnClick = BtnSaveFilteClick
     end
-    object BtnDownAll: TButton
-      Left = 424
-      Top = 66
-      Width = 105
-      Height = 25
-      Caption = #1057#1073#1088#1086#1089#1080#1090#1100' '#1074#1089#1105
-      TabOrder = 4
-      OnClick = BtnDownAllClick
-    end
-  end
-  object mm: TMemo
-    Left = 8
-    Top = 328
-    Width = 529
-    Height = 73
-    ScrollBars = ssVertical
-    TabOrder = 4
   end
   object ImageList: TImageList
     ColorDepth = cd32Bit
@@ -283,5 +267,17 @@ object FrmDownloadFiles: TFrmDownloadFiles
       83C1CCF3000000008FF1CC330000000083C1CF2300000000E187CCC700000000
       F00FC00F00000000FC3FC01F0000000000000000000000000000000000000000
       000000000000}
+  end
+  object PopupMenu: TPopupMenu
+    Left = 312
+    Top = 216
+    object PM_CheckedAllFiles: TMenuItem
+      Caption = #1054#1090#1084#1077#1090#1080#1090#1100' '#1074#1089#1077' '#1092#1072#1081#1083#1099
+      OnClick = PM_CheckedAllFilesClick
+    end
+    object PM_DownCheckAllFiles: TMenuItem
+      Caption = #1057#1073#1088#1086#1089#1080#1090#1100' '#1074#1089#1077' '#1092#1072#1081#1083#1099
+      OnClick = PM_DownCheckAllFilesClick
+    end
   end
 end

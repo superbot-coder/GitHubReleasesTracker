@@ -6,7 +6,8 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.JumpList, Vcl.StdCtrls, Vcl.ComCtrls,
   Vcl.ExtCtrls, System.JSON, REST.Types ,RESTContentTypeStr, System.ImageList,
-  Vcl.ImgList, FormatFileSizeMod, System.StrUtils, System.IOUtils;
+  Vcl.ImgList, FormatFileSizeMod, System.StrUtils, System.IOUtils, System.IniFiles,
+  Vcl.Menus;
 
 type
   TFrmDownloadFiles = class(TForm)
@@ -15,14 +16,15 @@ type
     BtnClose: TButton;
     PnlBoard: TPanel;
     ImageList: TImageList;
-    EdFilterEnclude: TEdit;
+    EdFilterInclude: TEdit;
     EdFilterExclude: TEdit;
     LblFilterInclude: TLabel;
     LblFilterExclude: TLabel;
     BtnApplyFilter: TButton;
-    BtnSelectAll: TButton;
-    BtnDownAll: TButton;
-    mm: TMemo;
+    BtnSaveFilte: TButton;
+    PopupMenu: TPopupMenu;
+    PM_CheckedAllFiles: TMenuItem;
+    PM_DownCheckAllFiles: TMenuItem;
     procedure BtnCloseClick(Sender: TObject);
     Function AddLVItem: integer;
     procedure BtnApplyClick(Sender: TObject);
@@ -30,9 +32,10 @@ type
     procedure FormCreate(Sender: TObject);
     procedure ExecutFilters;
     procedure BtnApplyFilterClick(Sender: TObject);
-    procedure BtnSelectAllClick(Sender: TObject);
-    procedure BtnDownAllClick(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure BtnSaveFilteClick(Sender: TObject);
+    procedure PM_CheckedAllFilesClick(Sender: TObject);
+    procedure PM_DownCheckAllFilesClick(Sender: TObject);
   private
     { Private declarations }
     STDownloadFiles : TStrings;
@@ -68,12 +71,26 @@ var
   SavedFileName: string;
   DownloadDir: string;
 begin
+
+  // подготовка директорнии для скачивания; preparing a directory for download
+  if arProjectList[FProjectIndex].NeedSubDir then
+    DownloadDir := arProjectList[FProjectIndex].ProjectDir + '\' + Ftag_name
+  else
+    DownloadDir := arProjectList[FProjectIndex].ProjectDir;
+  if Not DirectoryExists(DownloadDir) then ForceDirectories(DownloadDir);
+
   for i := 0 to LVFiles.Items.Count -1 do
   begin
     if Not LVFiles.Items[i].Checked then Continue;
-
     LVFiles.Items[i].Selected := true;
 
+    // Получаю финалное имя файла
+    SavedFileName := LVFiles.Items[i].Caption;
+    if arProjectList[FProjectIndex].AddVerToFileName then
+      insert('_' + Ftag_name, SavedFileName, LastDelimiter('.', SavedFileName)-1);
+    SavedFileName := DownloadDir + '\' + SavedFileName;
+
+    // Загружаю файл с GitHub
     with FrmMain do begin
       RESTResponse.RootElement := '';
       RESTClient.Accept        := 'application'; //'application/zip';
@@ -86,26 +103,13 @@ begin
       end;
     end;
 
-    // подготовка директорнии для скачивания; preparing a directory for download
-    if arProjectList[FProjectIndex].NeedSubDir then
-      DownloadDir := arProjectList[FProjectIndex].ProjectDir + '\' + Ftag_name
-    else
-      DownloadDir := arProjectList[FProjectIndex].ProjectDir;
-    if Not DirectoryExists(DownloadDir) then ForceDirectories(DownloadDir);
-
-    SavedFileName := LVFiles.Items[i].Caption;
-    if arProjectList[FProjectIndex].AddVerToFileName then
-      insert('_' + Ftag_name, SavedFileName, LastDelimiter('.', SavedFileName)-1);
-
-    SavedFileName := DownloadDir + '\' + SavedFileName;
-
+    // Сохраняю загруженный файл
     TFile.WriteAllBytes(SavedFileName, FrmMain.RESTResponse.RawBytes);
     If FileExists(SavedFileName) then LVFiles.Items[i].SubItems[1] := 'Скачано';
     Application.ProcessMessages;
-
   end;
 
-  if EdFilterEnclude.Modified then ShowMessage('Modified');
+
 
 end;
 
@@ -119,16 +123,25 @@ begin
   Close;
 end;
 
-procedure TFrmDownloadFiles.BtnDownAllClick(Sender: TObject);
-var i: Word;
+procedure TFrmDownloadFiles.BtnSaveFilteClick(Sender: TObject);
+var
+  INI: TIniFile;
+  Section: string;
 begin
-  for i := 0 to LVFiles.Items.Count -1 do LVFiles.Items[i].Checked := false;
-end;
-
-procedure TFrmDownloadFiles.BtnSelectAllClick(Sender: TObject);
-var i: Word;
-begin
-  for i := 0 to LVFiles.Items.Count -1 do LVFiles.Items[i].Checked := true;
+  if EdFilterInclude.Modified or EdFilterExclude.Modified then
+  begin
+    arProjectList[FProjectIndex].FilterInclude := EdFilterInclude.Text;
+    arProjectList[FProjectIndex].FilterExclude := EdFilterExclude.Text;
+    Section := 'PROJECT_LIST\' +
+               StringReplace(arProjectList[FProjectIndex].FullProjectName, '/', '_' , []);
+    INI := TIniFile.Create(FileConfig);
+    try
+      INI.WriteString(Section, 'FilterInclude', EdFilterInclude.Text);
+      INI.WriteString(Section, 'FilterExclude', EdFilterExclude.Text);
+    finally
+      INI.Free;
+    end;
+  end;
 end;
 
 procedure TFrmDownloadFiles.ExecutFilters;
@@ -142,8 +155,8 @@ begin
   STFilterExclude := TStringList.Create;
 
   //  подготавливаю список фильтка "Include"
-  if EdFilterEnclude.Modified then
-    s_temp := AnsiLowerCase(EdFilterEnclude.Text)
+  if EdFilterInclude.Modified then
+    s_temp := AnsiLowerCase(EdFilterInclude.Text)
   else
     s_temp := AnsiLowerCase(arProjectList[FProjectIndex].FilterInclude);
   s_temp := StringReplace(s_temp, ' ', '', [rfReplaceAll]);
@@ -187,7 +200,7 @@ end;
 
 procedure TFrmDownloadFiles.FormCreate(Sender: TObject);
 begin
-  EdFilterEnclude.MaxLength := 500;
+  EdFilterInclude.MaxLength := 500;
   EdFilterExclude.MaxLength := 500;
   STDownloadFiles := TStringList.Create;
 end;
@@ -195,6 +208,18 @@ end;
 procedure TFrmDownloadFiles.FormDestroy(Sender: TObject);
 begin
   STDownloadFiles.Free;
+end;
+
+procedure TFrmDownloadFiles.PM_CheckedAllFilesClick(Sender: TObject);
+var i: Word;
+begin
+  for i := 0 to LVFiles.Items.Count -1 do LVFiles.Items[i].Checked := true;
+end;
+
+procedure TFrmDownloadFiles.PM_DownCheckAllFilesClick(Sender: TObject);
+var i: Word;
+begin
+  for i := 0 to LVFiles.Items.Count -1 do LVFiles.Items[i].Checked := false;
 end;
 
 procedure TFrmDownloadFiles.ShowInit(JSONData: TJSONValue; ProjectIndex: Integer);
@@ -206,7 +231,8 @@ var
 begin
   FProjectIndex := ProjectIndex;
   STDownloadFiles.Clear;
-  EdFilterEnclude.Text := arProjectList[ProjectIndex].FilterInclude;
+  LVFiles.Clear;
+  EdFilterInclude.Text := arProjectList[ProjectIndex].FilterInclude;
   EdFilterExclude.Text := arProjectList[ProjectIndex].FilterExclude;
 
   if JSONData = Nil then
@@ -220,6 +246,15 @@ begin
       if RESTResponse.StatusCode <> 200 then Exit;
       JSONData := RESTResponse.JSONValue;
     end;
+  end;
+
+  if JSONData = Nil then
+  begin
+    MessageBox(Handle, PChar('Репозиторий: ' +
+                             arProjectList[ProjectIndex].ProjectName + #13#10 +
+                             'Не найдено ни одного релиза'),
+               PChar(CAPTION_MB), MB_ICONINFORMATION);
+    Exit;
   end;
 
   Ftag_name := JSONData.FindValue('tag_name').Value;

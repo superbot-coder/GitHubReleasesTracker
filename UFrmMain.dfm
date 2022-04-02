@@ -753,6 +753,10 @@ object FrmMain: TFrmMain
       Caption = #1055#1088#1086#1074#1077#1088#1080#1090#1100' '#1086#1073#1085#1086#1074#1083#1077#1085#1080#1077' '#1087#1088#1086#1077#1082#1090#1072
       OnClick = PM_OneProjectCheckClick
     end
+    object PM_DownloadFiles: TMenuItem
+      Caption = #1057#1082#1072#1095#1072#1090#1100' '#1092#1072#1081#1083#1099
+      OnClick = PM_DownloadFilesClick
+    end
     object PM_OpenDir: TMenuItem
       Caption = #1054#1090#1082#1088#1099#1090#1100' '#1076#1080#1088#1077#1082#1090#1086#1088#1080#1102' '#1089' '#1092#1072#1081#1083#1072#1084#1080
       OnClick = PM_OpenDirClick
@@ -762,9 +766,9 @@ object FrmMain: TFrmMain
       SubMenuImages = ImageListProj
       OnClick = PM_OpenUrlClick
     end
-    object PP_EditItemSettings: TMenuItem
+    object PM_EditSettings: TMenuItem
       Caption = #1056#1077#1076#1072#1082#1090#1080#1088#1086#1074#1072#1090#1100' '#1085#1072#1089#1090#1088#1086#1081#1082#1080' '#1101#1083#1077#1084#1077#1085#1090#1072
-      OnClick = PP_EditItemSettingsClick
+      OnClick = PM_EditSettingsClick
     end
     object N1: TMenuItem
       Caption = '-'

@@ -58,7 +58,8 @@ type
     PM_OpenDir: TMenuItem;
     N1: TMenuItem;
     PM_OpenUrl: TMenuItem;
-    PP_EditItemSettings: TMenuItem;
+    PM_EditSettings: TMenuItem;
+    PM_DownloadFiles: TMenuItem;
     procedure MM_AddReleasesClick(Sender: TObject);
     function AddItems: Integer;
     procedure FormCreate(Sender: TObject);
@@ -80,7 +81,8 @@ type
     procedure MM_SettingsClick(Sender: TObject);
     procedure PM_OpenDirClick(Sender: TObject);
     procedure PM_OpenUrlClick(Sender: TObject);
-    procedure PP_EditItemSettingsClick(Sender: TObject);
+    procedure PM_EditSettingsClick(Sender: TObject);
+    procedure PM_DownloadFilesClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -570,31 +572,31 @@ begin
   end;
 end;
 
-procedure TFrmMain.PM_OneProjectCheckClick(Sender: TObject);
-var
-  x: Word;
+procedure TFrmMain.PM_DownloadFilesClick(Sender: TObject);
 begin
-  x := GetProjectIndex(LVProj.Selected.Caption);
-  OneProjectCheck(x);
+  FrmDownloadFiles.ShowInit(Nil, GetProjectIndex(LVProj.Selected.Caption));
+end;
+
+procedure TFrmMain.PM_OneProjectCheckClick(Sender: TObject);
+begin
+  OneProjectCheck(GetProjectIndex(LVProj.Selected.Caption));
 end;
 
 procedure TFrmMain.PM_OpenDirClick(Sender: TObject);
 var
-  x: Word;
+  i: Word;
   ProjDir: string;
 begin
-  if LVProj.SelCount = 0 then exit;
-  x := GetProjectIndex(LVProj.Selected.Caption);
-  ProjDir := arProjectList[x].ProjectDir;
-  if arProjectList[x].NeedSubDir then
-    if DirectoryExists(ProjDir + '\' +arProjectList[x].LastVersion) then
-      ProjDir := ProjDir + '\' +arProjectList[x].LastVersion;
+  i := GetProjectIndex(LVProj.Selected.Caption);
+  ProjDir := arProjectList[i].ProjectDir;
+  if arProjectList[i].NeedSubDir then
+    if DirectoryExists(ProjDir + '\' +arProjectList[i].LastVersion) then
+      ProjDir := ProjDir + '\' +arProjectList[i].LastVersion;
   ShellExecute(Handle, PChar('Open'), PChar(ProjDir),Nil, Nil, SW_SHOWNORMAL);
 end;
 
 procedure TFrmMain.PM_OpenUrlClick(Sender: TObject);
 begin
-  if LVProj.SelCount = 0 then exit;
   ShellExecute(Handle, PChar('Open'),
                PChar(arProjectList[GetProjectIndex(LVProj.Selected.Caption)].ProjectUrl),
                Nil, Nil, SW_SHOWMAXIMIZED);
@@ -606,17 +608,24 @@ begin
   begin
     PM_DeletProject.Visible    := false;
     PM_OneProjectCheck.Visible := false;
+    PM_OpenDir.Visible         := false;
+    PM_OpenUrl.Visible         := false;
+    PM_DownloadFiles.Visible   := false;
+    PM_EditSettings.Visible    := false;
   end
   else
   begin
     PM_DeletProject.Visible    := true;
     PM_OneProjectCheck.Visible := true;
+    PM_OpenDir.Visible         := true;
+    PM_OpenUrl.Visible         := true;
+    PM_DownloadFiles.Visible   := true;
+    PM_EditSettings.Visible    := true;
   end;
 end;
 
-procedure TFrmMain.PP_EditItemSettingsClick(Sender: TObject);
+procedure TFrmMain.PM_EditSettingsClick(Sender: TObject);
 begin
-  if LVProj.SelCount = 0 then exit;
   FrmAddProject.FormShowEdit(GetProjectIndex(LVProj.Selected.Caption));
 end;
 
