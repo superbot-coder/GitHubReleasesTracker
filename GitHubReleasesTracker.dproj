@@ -107,8 +107,8 @@
             <Form>FrmMain</Form>
             <FormType>dfm</FormType>
         </DCCReference>
-        <DCCReference Include="UFrmAddProject.pas">
-            <Form>FrmAddProject</Form>
+        <DCCReference Include="UFrmAddRepository.pas">
+            <Form>FrmAddRepository</Form>
             <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="UFrmSettings.pas">

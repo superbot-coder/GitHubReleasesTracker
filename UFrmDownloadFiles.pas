@@ -1,4 +1,4 @@
-unit UFrmDownloadFiles;
+п»їunit UFrmDownloadFiles;
 
 interface
 
@@ -39,7 +39,7 @@ type
   private
     { Private declarations }
     STDownloadFiles : TStrings;
-    FProjectIndex   : Integer;
+    FReposIndex     : Integer;
     Ftag_name       : string;
   public
     { Public declarations }
@@ -72,11 +72,11 @@ var
   DownloadDir: string;
 begin
 
-  // подготовка директорнии для скачивания; preparing a directory for download
-  if arProjectList[FProjectIndex].NeedSubDir then
-    DownloadDir := arProjectList[FProjectIndex].ProjectDir + '\' + Ftag_name
+  // РїРѕРґРіРѕС‚РѕРІРєР° РґРёСЂРµРєС‚РѕСЂРЅРёРё РґР»СЏ СЃРєР°С‡РёРІР°РЅРёСЏ; preparing a directory for download
+  if arReposList[FReposIndex].NeedSubDir then
+    DownloadDir := arReposList[FReposIndex].ReposDir + '\' + Ftag_name
   else
-    DownloadDir := arProjectList[FProjectIndex].ProjectDir;
+    DownloadDir := arReposList[FReposIndex].ReposDir;
   if Not DirectoryExists(DownloadDir) then ForceDirectories(DownloadDir);
 
   for i := 0 to LVFiles.Items.Count -1 do
@@ -84,13 +84,13 @@ begin
     if Not LVFiles.Items[i].Checked then Continue;
     LVFiles.Items[i].Selected := true;
 
-    // Получаю финалное имя файла
+    // РџРѕР»СѓС‡Р°СЋ С„РёРЅР°Р»РЅРѕРµ РёРјСЏ С„Р°Р№Р»Р°
     SavedFileName := LVFiles.Items[i].Caption;
-    if arProjectList[FProjectIndex].AddVerToFileName then
+    if arReposList[FReposIndex].AddVerToFileName then
       insert('_' + Ftag_name, SavedFileName, LastDelimiter('.', SavedFileName)-1);
     SavedFileName := DownloadDir + '\' + SavedFileName;
 
-    // Загружаю файл с GitHub
+    // Р—Р°РіСЂСѓР¶Р°СЋ С„Р°Р№Р» СЃ GitHub
     with FrmMain do begin
       RESTResponse.RootElement := '';
       RESTClient.Accept        := 'application'; //'application/zip';
@@ -98,14 +98,14 @@ begin
       RESTRequest.Execute;
       if RESTResponse.StatusCode <> 200 then
       begin
-        LVProj.Items[i].SubItems[1] := 'Ошибка';
+        LVProj.Items[i].SubItems[1] := 'РћС€РёР±РєР°';
         Continue;
       end;
     end;
 
-    // Сохраняю загруженный файл
+    // РЎРѕС…СЂР°РЅСЏСЋ Р·Р°РіСЂСѓР¶РµРЅРЅС‹Р№ С„Р°Р№Р»
     TFile.WriteAllBytes(SavedFileName, FrmMain.RESTResponse.RawBytes);
-    If FileExists(SavedFileName) then LVFiles.Items[i].SubItems[1] := 'Скачано';
+    If FileExists(SavedFileName) then LVFiles.Items[i].SubItems[1] := 'РЎРєР°С‡Р°РЅРѕ';
     Application.ProcessMessages;
   end;
 
@@ -130,10 +130,10 @@ var
 begin
   if EdFilterInclude.Modified or EdFilterExclude.Modified then
   begin
-    arProjectList[FProjectIndex].FilterInclude := EdFilterInclude.Text;
-    arProjectList[FProjectIndex].FilterExclude := EdFilterExclude.Text;
+    arReposList[FReposIndex].FilterInclude := EdFilterInclude.Text;
+    arReposList[FReposIndex].FilterExclude := EdFilterExclude.Text;
     Section := 'PROJECT_LIST\' +
-               StringReplace(arProjectList[FProjectIndex].FullProjectName, '/', '_' , []);
+               StringReplace(arReposList[FReposIndex].FullReposName, '/', '_' , []);
     INI := TIniFile.Create(FileConfig);
     try
       INI.WriteString(Section, 'FilterInclude', EdFilterInclude.Text);
@@ -154,20 +154,20 @@ begin
   STFilterInclude := TStringList.Create;
   STFilterExclude := TStringList.Create;
 
-  //  подготавливаю список фильтка "Include"
+  //  РїРѕРґРіРѕС‚Р°РІР»РёРІР°СЋ СЃРїРёСЃРѕРє С„РёР»СЊС‚РєР° "Include"
   if EdFilterInclude.Modified then
     s_temp := AnsiLowerCase(EdFilterInclude.Text)
   else
-    s_temp := AnsiLowerCase(arProjectList[FProjectIndex].FilterInclude);
+    s_temp := AnsiLowerCase(arReposList[FReposIndex].FilterInclude);
   s_temp := StringReplace(s_temp, ' ', '', [rfReplaceAll]);
   s_temp := StringReplace(s_temp, ',', #13, [rfReplaceAll]);
   STFilterInclude.Text := s_temp;
 
-  //  подготавливаю список фильтка "Exclude"
+  //  РїРѕРґРіРѕС‚Р°РІР»РёРІР°СЋ СЃРїРёСЃРѕРє С„РёР»СЊС‚РєР° "Exclude"
   if EdFilterExclude.Modified then
     s_temp := AnsiLowerCase(EdFilterExclude.Text)
   else
-    s_temp := AnsiLowerCase(arProjectList[FProjectIndex].FilterExclude);
+    s_temp := AnsiLowerCase(arReposList[FReposIndex].FilterExclude);
   s_temp := StringReplace(s_temp, ' ', '', [rfReplaceAll]);
   s_temp := StringReplace(s_temp, ',', #13, [rfReplaceAll]);
   STFilterExclude.Text := s_temp;
@@ -229,17 +229,17 @@ var
   FileName: string;
   sz : string;
 begin
-  FProjectIndex := ProjectIndex;
+  FReposIndex := ProjectIndex;
   STDownloadFiles.Clear;
   LVFiles.Clear;
-  EdFilterInclude.Text := arProjectList[ProjectIndex].FilterInclude;
-  EdFilterExclude.Text := arProjectList[ProjectIndex].FilterExclude;
+  EdFilterInclude.Text := arReposList[ProjectIndex].FilterInclude;
+  EdFilterExclude.Text := arReposList[ProjectIndex].FilterExclude;
 
   if JSONData = Nil then
   begin
     with FrmMain do
     begin
-      RESTClient.BaseURL       := arProjectList[ProjectIndex].ApiReleasesUrl;
+      RESTClient.BaseURL       := arReposList[ProjectIndex].ApiReleasesUrl;
       RESTClient.Accept        := arContentTypeStr[ord(ctAPPLICATION_JSON)];
       RESTResponse.RootElement := '[0]';
       RESTRequest.Execute;
@@ -250,9 +250,9 @@ begin
 
   if JSONData = Nil then
   begin
-    MessageBox(Handle, PChar('Репозиторий: ' +
-                             arProjectList[ProjectIndex].ProjectName + #13#10 +
-                             'Не найдено ни одного релиза'),
+    MessageBox(Handle, PChar('Р РµРїРѕР·РёС‚РѕСЂРёР№: ' +
+                             arReposList[ProjectIndex].ReposName + #13#10 +
+                             'РќРµ РЅР°Р№РґРµРЅРѕ РЅРё РѕРґРЅРѕРіРѕ СЂРµР»РёР·Р°'),
                PChar(CAPTION_MB), MB_ICONINFORMATION);
     Exit;
   end;
@@ -293,7 +293,7 @@ begin
   LVFiles.Items[x].ImageIndex := 1;
   LVFiles.Items[x].Checked    := true;
 
-  if arProjectList[FProjectIndex].RuleDownload = 1 then ExecutFilters;
+  if arReposList[FReposIndex].RuleDownload = 1 then ExecutFilters;
 
   ShowModal;
 

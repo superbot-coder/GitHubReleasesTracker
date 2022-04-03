@@ -64,7 +64,7 @@ begin
   TStyleManager.SetStyle(cbxVclStyles.Items[cbxVclStyles.ItemIndex]);
   if AnsiMatchStr(cbxVclStyles.Items[cbxVclStyles.ItemIndex], arDarkStyles) then
     GLStyleIcon := 2 else GLStyleIcon := 0;
-  FrmMain.ProjectListUpdateVisible;
+  FrmMain.ReposListUpdateVisible;
 end;
 
 procedure TFrmSettings.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -74,7 +74,7 @@ begin
     cbxVclStyles.ItemIndex := cbxVclStyles.Items.IndexOf(FBackUpStyle);
     TStyleManager.SetStyle(FBackUpStyle);
     if AnsiMatchStr(FBackUpStyle, arDarkStyles) then GLStyleIcon := 2 else GLStyleIcon := 0;
-    FrmMain.ProjectListUpdateVisible;
+    FrmMain.ReposListUpdateVisible;
   end;
 end;
 

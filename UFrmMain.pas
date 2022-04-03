@@ -13,13 +13,13 @@ uses
 
 type TSortType = (stASC, stDESC);
 type
-  TProjectListRec = Record
-    ProjectUrl     : string; // Project URL
-    ProjectDir     : string; // Project Directory
-    ApiProjectUrl  : string; // Api Project URL
-    ApiReleasesUrl : string; // Api Project Releases URL
-    ProjectName    : string; // Project name
-    FullProjectName: string;
+  TRepositoryListRec = Record
+    ReposUrl       : string; // Repository URL
+    ReposDir       : string; // Repository Directory
+    ApiReposUrl    : string; // Api repository URL
+    ApiReleasesUrl : string; // Api Repository Releases URL
+    ReposName      : string; // Repository name
+    FullReposName  : string;
     AvatarFile     : string;
     AvatarUrl      : string;
     FilterInclude  : string;
@@ -41,15 +41,15 @@ type
   TFrmMain = class(TForm)
     MainMenu: TMainMenu;
     U1: TMenuItem;
-    MM_AddReleases: TMenuItem;
-    ImageListProj: TImageList;
+    MM_AddRepository: TMenuItem;
+    ImageListRepos: TImageList;
     RESTClient: TRESTClient;
     RESTRequest: TRESTRequest;
     RESTResponse: TRESTResponse;
     PopupMenu: TPopupMenu;
-    PM_DeletProject: TMenuItem;
+    PM_DeletRepository: TMenuItem;
     TimerTracker: TTimer;
-    PM_OneProjectCheck: TMenuItem;
+    PM_OneRepositoryCheck: TMenuItem;
     LVProj: TListView;
     mmInfo: TMemo;
     BtnTest: TButton;
@@ -60,22 +60,25 @@ type
     PM_OpenUrl: TMenuItem;
     PM_EditSettings: TMenuItem;
     PM_DownloadFiles: TMenuItem;
-    procedure MM_AddReleasesClick(Sender: TObject);
+    Help: TMenuItem;
+    MM_Update: TMenuItem;
+    MM_OpenGitHubRepos: TMenuItem;
+    procedure MM_AddRepositoryClick(Sender: TObject);
     function AddItems: Integer;
     procedure FormCreate(Sender: TObject);
     procedure LoadConfigAndProjectList(LoadConfigType: TLoadConfigsType);
     procedure PopupMenuPopup(Sender: TObject);
-    procedure PM_DeletProjectClick(Sender: TObject);
-    procedure RemoveProjectFromProjectList(FullProjectName: String);
-    procedure ProjectListUpdateVisible;
+    procedure PM_DeletRepositoryClick(Sender: TObject);
+    procedure RemoveRepositoryFromReposList(FullRepositoryName: String);
+    procedure ReposListUpdateVisible;
     procedure AddLog(StrMsg: String);
     procedure LVProjColumnClick(Sender: TObject; Column: TListColumn);
     function GetWayToSortet(ColumnIndex: UInt8): TSortType;
-    function GetProjectIndex(ProjectName: string): Integer;
+    function GetRepositoryIndex(ReposytoryName: string): Integer;
     procedure TimerTrackerTimer(Sender: TObject);
-    procedure ProjectTracking;
-    procedure OneProjectCheck(ProjectIndex: Integer);
-    procedure PM_OneProjectCheckClick(Sender: TObject);
+    procedure RepositoryTracking;
+    procedure OneReleaseCheck(ReposIndex: Integer);
+    procedure PM_OneRepositoryCheckClick(Sender: TObject);
     procedure BtnTestClick(Sender: TObject);
     function ConvertGitHubDateToDateTime(GitDateTime: String): String;
     procedure MM_SettingsClick(Sender: TObject);
@@ -100,7 +103,7 @@ var
   GLDefProjectsDir  : string;
   GLStyleName       : String;
   GLStyleIcon       : Byte;
-  arProjectList     : array of TProjectListRec;
+  arReposList       : array of TRepositoryListRec;
   GMT               : ShortInt; // Часовой пояс
   GLNewReleasesLive : Byte;
 
@@ -120,7 +123,7 @@ implementation
 
 {$R *.dfm}
 
-Uses Vcl.Themes, UFrmAddProject, UFrmSettings, UFrmDownloadFiles;
+Uses Vcl.Themes, UFrmAddRepository, UFrmSettings, UFrmDownloadFiles;
 
 Var
   ArSortColumnsPos: array[0..5] of TSortType;
@@ -205,17 +208,17 @@ begin
 
   if GLProjectsDir = '' then GLProjectsDir := GLDefProjectsDir;
 
-  ProjectListUpdateVisible;
+  ReposListUpdateVisible;
   for b := 0 to Length(ArSortColumnsPos) -1 do ArSortColumnsPos[b] := stASC;
 
 end;
 
-function TFrmMain.GetProjectIndex(ProjectName: string): Integer;
+function TFrmMain.GetRepositoryIndex(ReposytoryName: string): Integer;
 var i: Integer;
 begin
   Result := -1;
-  for i := 0 to length(arProjectList) -1 do
-    if arProjectList[i].FullProjectName = ProjectName then
+  for i := 0 to length(arReposList) -1 do
+    if arReposList[i].FullReposName = ReposytoryName then
     begin
       Result := i;
       Break;
@@ -286,19 +289,19 @@ begin
     LVProj.Clear;
     Section := 'PROJECT_LIST';
     INI.ReadSubSections(Section, ST, false);
-    arProjectList := Nil;
-    SetLength(arProjectList, ST.Count);
+    arReposList := Nil;
+    SetLength(arReposList, ST.Count);
     for i := 0 to ST.Count -1 do
     begin
       SubSection := Section + '\' + ST.Strings[i];
-      with arProjectList[i] do
+      with arReposList[i] do
       begin
-        ProjectUrl      := INI.ReadString(SubSection, 'ProjectUrl', '');
-        ProjectDir      := INI.ReadString(SubSection, 'ProjectDir','');
-        ApiProjectUrl   := INI.ReadString(SubSection, 'ApiProjectUrl','');
+        ReposUrl        := INI.ReadString(SubSection, 'ProjectUrl', '');
+        ReposDir        := INI.ReadString(SubSection, 'ProjectDir','');
+        ApiReposUrl     := INI.ReadString(SubSection, 'ApiProjectUrl','');
         ApiReleasesUrl  := INI.ReadString(SubSection, 'ApiReleasesUrl','');
-        ProjectName     := INI.ReadString(SubSection, 'ProjectName','');
-        FullProjectName := INI.ReadString(SubSection, 'FullProjectName', '');
+        ReposName       := INI.ReadString(SubSection, 'ProjectName','');
+        FullReposName   := INI.ReadString(SubSection, 'FullProjectName', '');
         AvatarFile      := INI.ReadString(SubSection, 'AvatarFile','');
         AvatarUrl       := INI.ReadString(SubSection, 'AvatarUrl','');
         FilterInclude   := INI.ReadString(SubSection, 'FilterInclude','');
@@ -320,24 +323,24 @@ begin
   end;
 end;
 
-procedure TFrmMain.MM_AddReleasesClick(Sender: TObject);
+procedure TFrmMain.MM_AddRepositoryClick(Sender: TObject);
 var
   i, x: Integer;
 begin
-  FrmAddProject.FrmShowInit;
-  if Not FrmAddProject.Applay then Exit;
-  ProjectListUpdateVisible;
+  FrmAddRepository.FrmShowInit;
+  if Not FrmAddRepository.Applay then Exit;
+  ReposListUpdateVisible;
   {
-  i := Length(arProjectList)-1;
+  i := Length(arReposList)-1;
   x := AddItems;
   with LVProj.Items[x] do
   begin
-    Caption                      := arProjectList[i].FullProjectName;
-    SubItems[lv_proj_version]    := arProjectList[i].LastVersion;
-    SubItems[lv_date_publish]    := arProjectList[i].DatePublish;
-    SubItems[lv_date_last_check] := DateTimeToStr(arProjectList[i].LastChecked);
-    SubItems[lv_Language]        := arProjectList[i].Language;
-    SubItems[lv_project_url]     := arProjectList[i].ProjectUrl;
+    Caption                      := arReposList[i].FullProjectName;
+    SubItems[lv_proj_version]    := arReposList[i].LastVersion;
+    SubItems[lv_date_publish]    := arReposList[i].DatePublish;
+    SubItems[lv_date_last_check] := DateTimeToStr(arReposList[i].LastChecked);
+    SubItems[lv_Language]        := arReposList[i].Language;
+    SubItems[lv_project_url]     := arReposList[i].ProjectUrl;
   end;
   }
 end;
@@ -347,7 +350,7 @@ begin
   FrmSettings.FormShowInit;
 end;
 
-procedure TFrmMain.OneProjectCheck(ProjectIndex: Integer);
+procedure TFrmMain.OneReleaseCheck(ReposIndex: Integer);
 var
   JSONArray     : TJSONArray;
   tag_name      : string;
@@ -363,11 +366,11 @@ var
   DatePublish   : TDateTime;
 begin
 
-  if ProjectIndex = -1 then Exit;
+  if ReposIndex = -1 then Exit;
 
   RESTResponse.RootElement := '[0]';
   RESTClient.Accept        := arContentTypeStr[ord(ctAPPLICATION_JSON)];
-  RESTClient.BaseURL       := arProjectList[ProjectIndex].ApiReleasesUrl;
+  RESTClient.BaseURL       := arReposList[ReposIndex].ApiReleasesUrl;
   RESTRequest.Execute;
 
   if RESTResponse.StatusCode <> 200 then
@@ -392,16 +395,16 @@ begin
   s_temp      := RESTResponse.JSONValue.FindValue('published_at').Value;
   s_temp      := ConvertGitHubDateToDateTime(s_temp);
   DatePublish := StrToDateTime(s_temp);
-  arProjectList[ProjectIndex].LastChecked := Date + Time;
+  arReposList[ReposIndex].LastChecked := Date + Time;
 
   STFilters  := TStringList.Create;
   STFilesURL := TStringList.Create;
   try
 
     // ****** проверка версии релиза; verifying release version ******
-    if arProjectList[ProjectIndex].LastVersion = tag_name then
+    if arReposList[ReposIndex].LastVersion = tag_name then
     begin
-      s_temp := 'Имя проекта: ' +arProjectList[ProjectIndex].ProjectName + #13#10 +
+      s_temp := 'Имя проекта: ' +arReposList[ReposIndex].ReposName + #13#10 +
                 'Новый релиз не обнаружен' + #13#10 +
                 'Проверка релиза завершена.' ;
       MessageBox(Handle, PChar(s_temp), PChar(CAPTION_MB), MB_ICONINFORMATION);
@@ -411,12 +414,12 @@ begin
       exit;
     end;
 
-    arProjectList[ProjectIndex].LastVersion  := tag_name;
-    arProjectList[ProjectIndex].DatePublish  := s_temp;
-    arProjectList[ProjectIndex].NewReleaseDT := Date + Time;
+    arReposList[ReposIndex].LastVersion  := tag_name;
+    arReposList[ReposIndex].DatePublish  := s_temp;
+    arReposList[ReposIndex].NewReleaseDT := Date + Time;
 
     s_temp := 'Oбнаружен новый релиз: ' + tag_name + #13#10 +
-              'Название проекта: ' + arProjectList[ProjectIndex].ProjectName + #13#10 + #13#10 +
+              'Название проекта: ' + arReposList[ReposIndex].ReposName + #13#10 + #13#10 +
               'Скачать новые файлы?' + #13#10 +
               'ДА - скачать, НЕТ - Не скачивать';
     if MessageBox(Handle, PChar(s_temp),
@@ -437,11 +440,11 @@ begin
 
     // Условное скачивание, использование фильтра
     // Conditional download, using a filter
-    if arProjectList[ProjectIndex].RuleDownload = 1 then
+    if arReposList[ReposIndex].RuleDownload = 1 then
     begin
 
       // Использую фильтр "Включить"; Use the filter "Include"
-      s_temp := StringReplace(arProjectList[ProjectIndex].FilterInclude, ' ', '', [rfReplaceAll]);
+      s_temp := StringReplace(arReposList[ReposIndex].FilterInclude, ' ', '', [rfReplaceAll]);
       STFilters.Text := StringReplace(s_temp, ',', #13, [rfReplaceAll]);
       //ShowMessage(STFilters.Text);
 
@@ -468,7 +471,7 @@ begin
       end;
 
       // Использую фильтр "Исключить"; Use the filter "Exclude"
-      s_temp := StringReplace(arProjectList[ProjectIndex].FilterExclude, ' ', '', [rfReplaceAll]);
+      s_temp := StringReplace(arReposList[ReposIndex].FilterExclude, ' ', '', [rfReplaceAll]);
       STFilters.Text := StringReplace(s_temp, ',', #13, [rfReplaceAll]);
 
       cnt := 0;
@@ -498,10 +501,10 @@ begin
     // ****** Скачивание файлов из списка; Download files from the list ******
 
     // подготовка директорнии для скачивания; preparing a directory for download
-    if arProjectList[ProjectIndex].NeedSubDir then
-      DownloadDir := arProjectList[ProjectIndex].ProjectDir + '\' + tag_name
+    if arReposList[ReposIndex].NeedSubDir then
+      DownloadDir := arReposList[ReposIndex].ReposDir + '\' + tag_name
     else
-      DownloadDir := arProjectList[ProjectIndex].ProjectDir;
+      DownloadDir := arReposList[ReposIndex].ReposDir;
     if Not DirectoryExists(DownloadDir) then ForceDirectories(DownloadDir);
 
     //mmInfo.Lines.Add(STFilesURL.text);
@@ -523,13 +526,13 @@ begin
       SavedFileName := STFilesURL.Strings[i];
       Delete(SavedFileName, 1, LastDelimiter('/', SavedFileName));
 
-      if arProjectList[ProjectIndex].AddVerToFileName then
+      if arReposList[ReposIndex].AddVerToFileName then
         Insert('_' + tag_name, SavedFileName, LastDelimiter('.', SavedFileName) -1);
 
       SavedFileName := DownloadDir + '\' + SavedFileName;
 
       {
-      if arProjectList[ProjectIndex].NeedSubDir then
+      if arReposList[ProjectIndex].NeedSubDir then
         SavedFileName := DownloadDir + '\' + tag_name + '\' + SavedFileName
       else
       begin
@@ -548,21 +551,21 @@ begin
   finally
     STFilters.Free;
     STFilesURL.Free;
-    FrmAddProject.SaveAddedNewProject(ProjectIndex);
-    ProjectListUpdateVisible;
+    FrmAddRepository.SaveAddedNewProject(ReposIndex);
+    ReposListUpdateVisible;
   end;
 
 end;
 
-procedure TFrmMain.PM_DeletProjectClick(Sender: TObject);
+procedure TFrmMain.PM_DeletRepositoryClick(Sender: TObject);
 Var
   DelProjName: string;
   INI: TIniFile;
 begin
   DelProjName := LVProj.Selected.Caption;
 
-  RemoveProjectFromProjectList(LVProj.Selected.Caption);
-  ProjectListUpdateVisible;
+  RemoveRepositoryFromReposList(LVProj.Selected.Caption);
+  ReposListUpdateVisible;
 
   INI := TIniFile.Create(FileConfig);
   try
@@ -574,12 +577,12 @@ end;
 
 procedure TFrmMain.PM_DownloadFilesClick(Sender: TObject);
 begin
-  FrmDownloadFiles.ShowInit(Nil, GetProjectIndex(LVProj.Selected.Caption));
+  FrmDownloadFiles.ShowInit(Nil, GetRepositoryIndex(LVProj.Selected.Caption));
 end;
 
-procedure TFrmMain.PM_OneProjectCheckClick(Sender: TObject);
+procedure TFrmMain.PM_OneRepositoryCheckClick(Sender: TObject);
 begin
-  OneProjectCheck(GetProjectIndex(LVProj.Selected.Caption));
+  OneReleaseCheck(GetRepositoryIndex(LVProj.Selected.Caption));
 end;
 
 procedure TFrmMain.PM_OpenDirClick(Sender: TObject);
@@ -587,18 +590,18 @@ var
   i: Word;
   ProjDir: string;
 begin
-  i := GetProjectIndex(LVProj.Selected.Caption);
-  ProjDir := arProjectList[i].ProjectDir;
-  if arProjectList[i].NeedSubDir then
-    if DirectoryExists(ProjDir + '\' +arProjectList[i].LastVersion) then
-      ProjDir := ProjDir + '\' +arProjectList[i].LastVersion;
+  i := GetRepositoryIndex(LVProj.Selected.Caption);
+  ProjDir := arReposList[i].ReposDir;
+  if arReposList[i].NeedSubDir then
+    if DirectoryExists(ProjDir + '\' +arReposList[i].LastVersion) then
+      ProjDir := ProjDir + '\' +arReposList[i].LastVersion;
   ShellExecute(Handle, PChar('Open'), PChar(ProjDir),Nil, Nil, SW_SHOWNORMAL);
 end;
 
 procedure TFrmMain.PM_OpenUrlClick(Sender: TObject);
 begin
   ShellExecute(Handle, PChar('Open'),
-               PChar(arProjectList[GetProjectIndex(LVProj.Selected.Caption)].ProjectUrl),
+               PChar(arReposList[GetRepositoryIndex(LVProj.Selected.Caption)].ReposUrl),
                Nil, Nil, SW_SHOWMAXIMIZED);
 end;
 
@@ -606,36 +609,36 @@ procedure TFrmMain.PopupMenuPopup(Sender: TObject);
 begin
   if (LVProj.Items.Count = 0) or (LVProj.SelCount = 0) then
   begin
-    PM_DeletProject.Visible    := false;
-    PM_OneProjectCheck.Visible := false;
-    PM_OpenDir.Visible         := false;
-    PM_OpenUrl.Visible         := false;
-    PM_DownloadFiles.Visible   := false;
-    PM_EditSettings.Visible    := false;
+    PM_DeletRepository.Visible    := false;
+    PM_OneRepositoryCheck.Visible := false;
+    PM_OpenDir.Visible            := false;
+    PM_OpenUrl.Visible            := false;
+    PM_DownloadFiles.Visible      := false;
+    PM_EditSettings.Visible       := false;
   end
   else
   begin
-    PM_DeletProject.Visible    := true;
-    PM_OneProjectCheck.Visible := true;
-    PM_OpenDir.Visible         := true;
-    PM_OpenUrl.Visible         := true;
-    PM_DownloadFiles.Visible   := true;
-    PM_EditSettings.Visible    := true;
+    PM_DeletRepository.Visible    := true;
+    PM_OneRepositoryCheck.Visible := true;
+    PM_OpenDir.Visible            := true;
+    PM_OpenUrl.Visible            := true;
+    PM_DownloadFiles.Visible      := true;
+    PM_EditSettings.Visible       := true;
   end;
 end;
 
 procedure TFrmMain.PM_EditSettingsClick(Sender: TObject);
 begin
-  FrmAddProject.FormShowEdit(GetProjectIndex(LVProj.Selected.Caption));
+  FrmAddRepository.FormShowEdit(GetRepositoryIndex(LVProj.Selected.Caption));
 end;
 
-procedure TFrmMain.ProjectListUpdateVisible;
+procedure TFrmMain.ReposListUpdateVisible;
 var
   i, x, len: Word;
   dt, dtl: TDateTime; //localized  date time
 begin
   LVProj.Items.Clear;
-  len := Length(arProjectList);
+  len := Length(arReposList);
   if len = 0 then Exit;
 
   LVProj.Items.BeginUpdate;
@@ -644,18 +647,18 @@ begin
     x := AddItems;
     with LVProj.Items[x] do
     begin
-      Caption                      := arProjectList[i].FullProjectName;
-      SubItems[lv_proj_version]    := arProjectList[i].LastVersion;
+      Caption                      := arReposList[i].FullReposName;
+      SubItems[lv_proj_version]    := arReposList[i].LastVersion;
       // Получаю локализованую дату и время; Getting localized date time
-      if arProjectList[i].DatePublish <> '' then
-        dtl := IncHour(StrToDateTime(arProjectList[i].DatePublish), GMT);
+      if arReposList[i].DatePublish <> '' then
+        dtl := IncHour(StrToDateTime(arReposList[i].DatePublish), GMT);
       SubItems[lv_date_publish]    := DateTimeToStr(dtl);
-      //SubItems[lv_date_publish]    := arProjectList[i].DatePublish; // No GMT
-      SubItems[lv_date_last_check] := DateTimeToStr(arProjectList[i].LastChecked);
-      SubItems[lv_Language]        := arProjectList[i].Language;
-      SubItems[lv_project_url]     := arProjectList[i].ProjectUrl;
+      //SubItems[lv_date_publish]    := arReposList[i].DatePublish; // No GMT
+      SubItems[lv_date_last_check] := DateTimeToStr(arReposList[i].LastChecked);
+      SubItems[lv_Language]        := arReposList[i].Language;
+      SubItems[lv_project_url]     := arReposList[i].ReposUrl;
 
-      dt := IncHour(arProjectList[i].NewReleaseDT, GLNewReleasesLive);
+      dt := IncHour(arReposList[i].NewReleaseDT, GLNewReleasesLive);
       if dt < Date + Time then ImageIndex := GLStyleIcon else ImageIndex := 1;
 
     end;
@@ -663,42 +666,42 @@ begin
   LVProj.Items.EndUpdate;
 end;
 
-procedure TFrmMain.ProjectTracking;
+procedure TFrmMain.RepositoryTracking;
 var
   i: UInt16;
-  ProjectCount: UInt16;
+  ReposCount: UInt16;
 begin
    AddLog('Начало проверки обновлений релизов.');
-   ProjectCount := Length(arProjectList);
-   if ProjectCount = 0 then
+   ReposCount := Length(arReposList);
+   if ReposCount = 0 then
    begin
-     AddLog('Список проектов пуст. проверка завершина');
+     AddLog('Список репозиториев пуст. проверка завершена');
      exit;
    end;
 
-  for i := 0 to ProjectCount -1 do
+  for i := 0 to ReposCount -1 do
   begin
     //....................
   end;
 
 end;
 
-procedure TFrmMain.RemoveProjectFromProjectList(FullProjectName: String);
+procedure TFrmMain.RemoveRepositoryFromReposList(FullRepositoryName: String);
 var
   i, ix, len: Word;
 begin
-  len := Length(arProjectList);
+  len := Length(arReposList);
   for i := 0 to Len - 1 do
   begin
-    if arProjectList[i].FullProjectName = FullProjectName then
+    if arReposList[i].FullReposName = FullRepositoryName then
     begin
        if i = len-1 then
        begin
-         setLength(arProjectList, len-1);
+         setLength(arReposList, len-1);
          Exit;
        end;
-       for ix := i + 1 to len-1 do arProjectList[ix-1] := arProjectList[ix];
-       setLength(arProjectList, len-1);
+       for ix := i + 1 to len-1 do arReposList[ix-1] := arReposList[ix];
+       setLength(arReposList, len-1);
        Exit;
     end;
   end;
@@ -712,7 +715,7 @@ begin
 
   //RESTResponse.RootElement := '[0]';
   //RESTClient.Accept        := arContentTypeStr[ord(ctAPPLICATION_JSON)];
-  //RESTClient.BaseURL       := arProjectList[0].ApiReleasesUrl;
+  //RESTClient.BaseURL       := arReposList[0].ApiReleasesUrl;
   // RESTRequest.Execute;
 
   //if RESTResponse.StatusCode <> 200 then Exit;

@@ -3,7 +3,7 @@ program GitHubReleasesTracker;
 uses
   Vcl.Forms,
   UFrmMain in 'UFrmMain.pas' {FrmMain},
-  UFrmAddProject in 'UFrmAddProject.pas' {FrmAddProject},
+  UFrmAddRepository in 'UFrmAddRepository.pas' {FrmAddRepository},
   UFrmSettings in 'UFrmSettings.pas' {FrmSettings},
   Vcl.Themes,
   Vcl.Styles,
@@ -16,7 +16,7 @@ begin
   Application.MainFormOnTaskbar := True;
   TStyleManager.TrySetStyle('Sapphire Kamri');
   Application.CreateForm(TFrmMain, FrmMain);
-  Application.CreateForm(TFrmAddProject, FrmAddProject);
+  Application.CreateForm(TFrmAddRepository, FrmAddRepository);
   Application.CreateForm(TFrmSettings, FrmSettings);
   Application.CreateForm(TFrmDownloadFiles, FrmDownloadFiles);
   Application.Run;

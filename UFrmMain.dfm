@@ -75,7 +75,7 @@ object FrmMain: TFrmMain
     RowSelect = True
     ParentFont = False
     PopupMenu = PopupMenu
-    SmallImages = ImageListProj
+    SmallImages = ImageListRepos
     TabOrder = 0
     ViewStyle = vsReport
     OnColumnClick = LVProjColumnClick
@@ -103,9 +103,9 @@ object FrmMain: TFrmMain
     Top = 168
     object U1: TMenuItem
       Caption = #1043#1083#1072#1074#1085#1086#1077
-      object MM_AddReleases: TMenuItem
-        Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1087#1088#1086#1077#1082#1090
-        OnClick = MM_AddReleasesClick
+      object MM_AddRepository: TMenuItem
+        Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1088#1087#1086#1079#1080#1090#1086#1088#1080#1081
+        OnClick = MM_AddRepositoryClick
       end
     end
     object Y1: TMenuItem
@@ -115,8 +115,17 @@ object FrmMain: TFrmMain
         OnClick = MM_SettingsClick
       end
     end
+    object Help: TMenuItem
+      Caption = '??'
+      object MM_Update: TMenuItem
+        Caption = #1055#1088#1086#1074#1077#1088#1080#1090#1100' '#1086#1073#1085#1086#1074#1083#1077#1085#1080#1077
+      end
+      object MM_OpenGitHubRepos: TMenuItem
+        Caption = #1056#1077#1087#1086#1079#1080#1090#1086#1088#1080#1081' '#1087#1088#1086#1075#1088#1072#1084#1084#1099' '#1085#1072' GitHub'
+      end
+    end
   end
-  object ImageListProj: TImageList
+  object ImageListRepos: TImageList
     ColorDepth = cd32Bit
     BlendColor = clBlack
     BkColor = clBlack
@@ -749,12 +758,12 @@ object FrmMain: TFrmMain
     OnPopup = PopupMenuPopup
     Left = 456
     Top = 168
-    object PM_OneProjectCheck: TMenuItem
-      Caption = #1055#1088#1086#1074#1077#1088#1080#1090#1100' '#1086#1073#1085#1086#1074#1083#1077#1085#1080#1077' '#1087#1088#1086#1077#1082#1090#1072
-      OnClick = PM_OneProjectCheckClick
+    object PM_OneRepositoryCheck: TMenuItem
+      Caption = #1055#1088#1086#1074#1077#1088#1080#1090#1100' '#1086#1073#1085#1086#1074#1083#1077#1085#1080#1077' '#1088#1077#1087#1086#1079#1080#1090#1086#1088#1080#1103
+      OnClick = PM_OneRepositoryCheckClick
     end
     object PM_DownloadFiles: TMenuItem
-      Caption = #1057#1082#1072#1095#1072#1090#1100' '#1092#1072#1081#1083#1099
+      Caption = #1057#1082#1072#1095#1072#1090#1100' '#1092#1072#1081#1083#1099' '#1088#1077#1083#1080#1079#1072
       OnClick = PM_DownloadFilesClick
     end
     object PM_OpenDir: TMenuItem
@@ -762,8 +771,8 @@ object FrmMain: TFrmMain
       OnClick = PM_OpenDirClick
     end
     object PM_OpenUrl: TMenuItem
-      Caption = #1054#1090#1082#1088#1099#1090#1100' '#1074#1077#1073' '#1089#1090#1088#1072#1085#1080#1094#1091' '#1087#1088#1086#1077#1082#1090#1072
-      SubMenuImages = ImageListProj
+      Caption = #1054#1090#1082#1088#1099#1090#1100' '#1074#1077#1073' '#1089#1090#1088#1072#1085#1080#1094#1091' '#1088#1077#1087#1086#1079#1080#1090#1086#1088#1080#1103
+      SubMenuImages = ImageListRepos
       OnClick = PM_OpenUrlClick
     end
     object PM_EditSettings: TMenuItem
@@ -773,9 +782,9 @@ object FrmMain: TFrmMain
     object N1: TMenuItem
       Caption = '-'
     end
-    object PM_DeletProject: TMenuItem
-      Caption = #1059#1076#1072#1083#1080#1090#1100' '#1087#1088#1086#1077#1082#1090
-      OnClick = PM_DeletProjectClick
+    object PM_DeletRepository: TMenuItem
+      Caption = #1059#1076#1072#1083#1080#1090#1100' '#1088#1077#1087#1086#1079#1080#1090#1086#1088#1080#1081' '#1080#1079' '#1089#1087#1080#1089#1082#1072
+      OnClick = PM_DeletRepositoryClick
     end
   end
   object TimerTracker: TTimer
