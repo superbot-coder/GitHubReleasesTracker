@@ -73,7 +73,7 @@ object FrmSettings: TFrmSettings
     TabOrder = 1
     Value = 72
   end
-  object edDefaultProjectDir: TEdit
+  object edDefaultReposDir: TEdit
     Left = 16
     Top = 72
     Width = 401
@@ -89,7 +89,8 @@ object FrmSettings: TFrmSettings
     Caption = 
       #1044#1080#1088#1077#1082#1090#1086#1088#1080#1103' '#1087#1086' '#1091#1084#1086#1083#1095#1072#1085#1080#1102' '#1076#1083#1103' '#1089#1082#1072#1095#1080#1074#1072#1085#1080#1103' '#1092#1072#1081#1083#1086#1074' '#1085#1086#1074#1099#1093' '#1088#1077#1083#1080#1079#1086#1074'.'#13#10#1045#1089 +
       #1083#1080' '#1076#1080#1088#1077#1082#1090#1086#1088#1080#1103' '#1085#1077' '#1073#1091#1076#1077#1090' '#1091#1082#1072#1079#1072#1085#1072' '#1090#1086' '#1073#1091#1076#1077#1090' '#1091#1082#1072#1079#1072#1085' '#1087#1091#1090#1100' '#1087#1086' '#1091#1084#1086#1083#1095#1072#1085#1080#1102 +
-      ':'#13#10'<User profile>\Downloads\GitHubReleasesTracker\<project name>'
+      ':'#13#10'<User profile>\Downloads\GitHubReleasesTracker\<repository na' +
+      'me>'
     TabOrder = 3
   end
   object cbxVclStyles: TComboBox

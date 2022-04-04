@@ -19,7 +19,7 @@ object FrmMain: TFrmMain
     619)
   PixelsPerInch = 96
   TextHeight = 13
-  object LVProj: TListView
+  object LVRepos: TListView
     Left = 8
     Top = 16
     Width = 1049
@@ -78,7 +78,7 @@ object FrmMain: TFrmMain
     SmallImages = ImageListRepos
     TabOrder = 0
     ViewStyle = vsReport
-    OnColumnClick = LVProjColumnClick
+    OnColumnClick = LVReposColumnClick
   end
   object mmInfo: TMemo
     Left = 8

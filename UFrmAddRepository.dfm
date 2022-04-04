@@ -3,7 +3,7 @@ object FrmAddRepository: TFrmAddRepository
   Top = 0
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
-  Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1085#1086#1074#1099#1081' '#1087#1088#1086#1077#1082#1090
+  Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1085#1086#1074#1099#1081' '#1088#1077#1087#1086#1079#1080#1090#1086#1088#1080#1081
   ClientHeight = 551
   ClientWidth = 587
   Color = clBtnFace
@@ -19,12 +19,12 @@ object FrmAddRepository: TFrmAddRepository
   OnKeyDown = FormKeyDown
   PixelsPerInch = 96
   TextHeight = 13
-  object LblUrlProject: TLabel
+  object LblUrlRepository: TLabel
     Left = 16
     Top = 16
-    Width = 140
+    Width = 163
     Height = 13
-    Caption = 'C'#1089#1099#1083#1082#1072' '#1087#1088#1086#1077#1082#1090#1072' '#1085#1072' GitHub: '
+    Caption = 'C'#1089#1099#1083#1082#1072' '#1088#1077#1087#1086#1079#1080#1090#1086#1088#1080#1103' '#1085#1072' GitHub: '
   end
   object SpdBtnOpenDir: TSpeedButton
     Left = 440
@@ -44,21 +44,21 @@ object FrmAddRepository: TFrmAddRepository
     Text = 'https://github.com/superbot-coder/chia_plotting_tools'
     OnChange = edRepositoryLinkChange
   end
-  object statTextProjectDir: TStaticText
+  object statTextReposDir: TStaticText
     Left = 16
     Top = 72
-    Width = 441
+    Width = 457
     Height = 25
     AutoSize = False
     Caption = 
-      #1044#1080#1088#1077#1082#1090#1086#1088#1080#1103' '#1076#1083#1103' '#1089#1082#1072#1095#1080#1074#1072#1085#1080#1103' '#1088#1077#1083#1080#1079#1086#1074' '#1101#1090#1086#1075#1086' '#1087#1088#1086#1077#1082#1090#1072': '#13#10'('#1087#1091#1090#1100' '#1087#1086' '#1091#1084#1086#1083 +
-      #1095#1072#1085#1080#1102' <User profile>\Downloads\GitHubReleasesTracker\<project na' +
-      'me>)'
+      #1044#1080#1088#1077#1082#1090#1086#1088#1080#1103' '#1076#1083#1103' '#1089#1082#1072#1095#1080#1074#1072#1085#1080#1103' '#1088#1077#1083#1080#1079#1086#1074' '#1101#1090#1086#1075#1086' '#1088#1077#1079#1080#1090#1086#1088#1080#1103': '#13#10#1087#1091#1090#1100' '#1087#1086' '#1091#1084#1086 +
+      #1083#1095#1072#1085#1080#1102': <User profile>\Downloads\GitHubReleasesTracker\<reposito' +
+      'ry name>'
     TabOrder = 1
   end
   object ChBoxSubDir: TCheckBox
-    Left = 16
-    Top = 144
+    Left = 24
+    Top = 168
     Width = 209
     Height = 17
     Caption = #1044#1083#1103' '#1082#1072#1078#1076#1086#1075#1086' '#1088#1077#1083#1080#1079#1072' '#1089#1091#1073#1076#1080#1088#1077#1082#1090#1086#1088#1080#1103
@@ -67,11 +67,11 @@ object FrmAddRepository: TFrmAddRepository
     TabOrder = 2
   end
   object ChBoxDownloadLastRelease: TCheckBox
-    Left = 16
-    Top = 192
+    Left = 24
+    Top = 144
     Width = 281
     Height = 17
-    Caption = #1057#1082#1072#1095#1072#1090#1100' '#1092#1072#1081#1083#1099' '#1088#1077#1083#1080#1079#1072' '#1087#1086#1089#1083#1077' '#1076#1086#1073#1072#1074#1083#1077#1085#1080#1103' '#1087#1088#1086#1077#1082#1090#1072
+    Caption = #1057#1082#1072#1095#1072#1090#1100' '#1092#1072#1081#1083#1099' '#1088#1077#1083#1080#1079#1072' '#1087#1086#1089#1083#1077' '#1076#1086#1073#1072#1074#1083#1077#1085#1080#1103' '#1088#1077#1087#1086#1079#1080#1090#1086#1088#1080#1103
     TabOrder = 3
   end
   object mm: TMemo
@@ -195,8 +195,8 @@ object FrmAddRepository: TFrmAddRepository
     OnClick = BtnCloseClick
   end
   object ChBoxAddVerToFileName: TCheckBox
-    Left = 16
-    Top = 168
+    Left = 24
+    Top = 192
     Width = 249
     Height = 17
     Caption = #1055#1088#1080#1073#1072#1074#1083#1103#1090#1100' '#1082' '#1080#1084#1077#1085#1080' '#1092#1072#1081#1083#1072' '#1074#1077#1088#1089#1080#1102' '#1088#1077#1083#1080#1079#1072

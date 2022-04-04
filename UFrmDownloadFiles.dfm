@@ -113,14 +113,14 @@ object FrmDownloadFiles: TFrmDownloadFiles
       TabOrder = 2
       OnClick = BtnApplyFilterClick
     end
-    object BtnSaveFilte: TButton
+    object BtnSaveFilter: TButton
       Left = 456
       Top = 66
       Width = 75
       Height = 25
       Caption = #1057#1086#1093#1088#1072#1085#1080#1090#1100' '
       TabOrder = 3
-      OnClick = BtnSaveFilteClick
+      OnClick = BtnSaveFilterClick
     end
   end
   object ImageList: TImageList

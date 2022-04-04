@@ -21,7 +21,7 @@ type
     LblFilterInclude: TLabel;
     LblFilterExclude: TLabel;
     BtnApplyFilter: TButton;
-    BtnSaveFilte: TButton;
+    BtnSaveFilter: TButton;
     PopupMenu: TPopupMenu;
     PM_CheckedAllFiles: TMenuItem;
     PM_DownCheckAllFiles: TMenuItem;
@@ -33,7 +33,7 @@ type
     procedure ExecutFilters;
     procedure BtnApplyFilterClick(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
-    procedure BtnSaveFilteClick(Sender: TObject);
+    procedure BtnSaveFilterClick(Sender: TObject);
     procedure PM_CheckedAllFilesClick(Sender: TObject);
     procedure PM_DownCheckAllFilesClick(Sender: TObject);
   private
@@ -98,7 +98,7 @@ begin
       RESTRequest.Execute;
       if RESTResponse.StatusCode <> 200 then
       begin
-        LVProj.Items[i].SubItems[1] := 'Ошибка';
+        LVRepos.Items[i].SubItems[1] := 'Ошибка';
         Continue;
       end;
     end;
@@ -123,7 +123,7 @@ begin
   Close;
 end;
 
-procedure TFrmDownloadFiles.BtnSaveFilteClick(Sender: TObject);
+procedure TFrmDownloadFiles.BtnSaveFilterClick(Sender: TObject);
 var
   INI: TIniFile;
   Section: string;

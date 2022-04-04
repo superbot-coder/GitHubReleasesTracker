@@ -14,8 +14,8 @@ type TFrmShowMode = (fsmAddNew, fsmEdit);
 type
   TFrmAddRepository = class(TForm)
     edRepositoryLink: TEdit;
-    LblUrlProject: TLabel;
-    statTextProjectDir: TStaticText;
+    LblUrlRepository: TLabel;
+    statTextReposDir: TStaticText;
     ChBoxSubDir: TCheckBox;
     ChBoxDownloadLastRelease: TCheckBox;
     mm: TMemo;
@@ -41,7 +41,7 @@ type
     function ExcludeTrailingURLDelimiter(URL: String): String;
     function GetImageExtention(ContentType: string): String;
     procedure edRepositoryLinkChange(Sender: TObject);
-    procedure SaveAddedNewProject(Index: Integer);
+    procedure SaveAddedNewRepository(Index: Integer);
     function CheckRepositoryExistes(URL: String): boolean;
     procedure SpdBtnOpenDirClick(Sender: TObject);
     procedure FormShowEdit(ReposIndex: integer);
@@ -50,12 +50,12 @@ type
     procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
-    FApiProject         : string;
+    FApiRepository      : string;
     FApiReleases        : string;
-    FProjectName        : string;
+    FRepositoryName     : string;
     FFullName           : string;
     FAvatar_url         : string;
-    FProgectDir         : string;
+    FRepositoryDir      : string;
     FAvatarFileName     : string;
     FLastReleaseVersion : string;
     FProjChecked        : Boolean;
@@ -185,10 +185,10 @@ begin
 
   // init values
   Applay              := false;
-  FApiProject         := '';
-  FProgectDir         := '';
+  FApiRepository      := '';
+  FRepositoryDir      := '';
   FApiReleases        := '';
-  FProjectName        := '';
+  FRepositoryName     := '';
   FFullName           := '';
   FAvatar_url         := '';
   FAvatarFileName     := '';
@@ -215,7 +215,7 @@ begin
     else Result := '';
 end;
 
-procedure TFrmAddRepository.SaveAddedNewProject(Index: Integer);
+procedure TFrmAddRepository.SaveAddedNewRepository(Index: Integer);
 var
   INI: TIniFile;
   Section: string;
@@ -228,12 +228,12 @@ begin
   try
     with INI do
     begin
-      WriteString(Section, 'ProjectUrl', arReposList[Index].ReposUrl);
-      WriteString(Section, 'ProjectDir', arReposList[Index].ReposDir);
-      WriteString(Section, 'ApiProjUrl', arReposList[Index].ApiReposUrl);
+      WriteString(Section, 'RepositoryUrl', arReposList[Index].ReposUrl);
+      WriteString(Section, 'RepositoryDir', arReposList[Index].ReposDir);
+      WriteString(Section, 'ApiRepositoryUrl', arReposList[Index].ApiReposUrl);
       WriteString(Section, 'ApiReleasesUrl', arReposList[Index].ApiReleasesUrl);
-      WriteString(Section, 'ProjectName', arReposList[Index].ReposName);
-      WriteString(Section, 'FullProjectName', arReposList[Index].FullReposName);
+      WriteString(Section, 'RepositoryName', arReposList[Index].ReposName);
+      WriteString(Section, 'FullRepositoryName', arReposList[Index].FullReposName);
       WriteString(Section, 'AvatarFile', arReposList[Index].AvatarFile);
       WriteString(Section, 'AvatarUrl',arReposList[Index].AvatarUrl );
       WriteString(Section, 'FilterInclude', arReposList[Index].FilterInclude);
@@ -280,7 +280,7 @@ begin
       FilterExclude := edFilterExclude.Text;
       AddVerToFileName := ChBoxAddVerToFileName.Checked;
     end;
-    SaveAddedNewProject(FReposIndex);
+    SaveAddedNewRepository(FReposIndex);
   end;
 
   if FFrmMode = fsmAddNew then
@@ -308,15 +308,15 @@ begin
     end;
 
     edRepositoryLink.Text := ExcludeTrailingURLDelimiter(Trim(edRepositoryLink.Text));
-    FApiProject         := ConverLinkToApiLink(edRepositoryLink.Text);
-    FApiReleases        := FApiProject + '/releases';
+    FApiRepository        := ConverLinkToApiLink(edRepositoryLink.Text);
+    FApiReleases          := FApiRepository + '/releases';
 
     with FrmMain do
     begin
       // проверка правильная ссылки; Check Existes the project
       RESTResponse.RootElement := '';
       RESTClient.Accept        := arContentTypeStr[ord(ctAPPLICATION_JSON)];
-      RESTClient.BaseURL       := FApiProject;
+      RESTClient.BaseURL       := FApiRepository;
       RESTRequest.Execute;
 
       if RESTResponse.StatusCode <> 200 then
@@ -333,7 +333,7 @@ begin
         Exit;
       end;
       // Получаю имя проекта; Getting name the project
-      FProjectName := RESTResponse.JSONValue.FindValue('name').Value;
+      FRepositoryName := RESTResponse.JSONValue.FindValue('name').Value;
 
       if RESTResponse.JSONValue.FindValue('full_name') = Nil then
       begin
@@ -343,7 +343,7 @@ begin
       // Получаю полное имя проекта; Getting full name the project
       FFullName := RESTResponse.JSONValue.FindValue('full_name').Value;
       // Заменяю символ "/" на "_" ;
-      mm.Lines.Add('Название проекта: ' + FProjectName);
+      mm.Lines.Add('Название репозитория: ' + FRepositoryName);
 
       // Получаю URL аватарки проекта; Getting the avatar URL of the project
       JSONData := RESTResponse.JSONValue.FindValue('owner').FindValue('avatar_url');
@@ -354,11 +354,11 @@ begin
 
       // Получаю директорию проекта; Getting the project directory
       if edSaveDir.Text <> '' then
-        FProgectDir := edSaveDir.Text
+        FRepositoryDir := edSaveDir.Text
       else
-        FProgectDir := GLProjectsDir + PathDelim +
+        FRepositoryDir := GLReposDir + PathDelim +
                        StringReplace(FFullName, '/', '_', [rfReplaceAll, rfIgnoreCase]);
-      if Not DirectoryExists(FProgectDir) then ForceDirectories(FProgectDir);
+      if Not DirectoryExists(FRepositoryDir) then ForceDirectories(FRepositoryDir);
 
       // Скачиваю файл аватарки; Downloading avatarka file
       RESTClient.BaseURL       := FAvatar_url;
@@ -372,7 +372,7 @@ begin
         ext := GetImageExtention(RESTResponse.ContentType);
         // Пoлучаю имя файла для сохранения аватарки
         // Getting the file name to save the avatar
-        FAvatarFileName := FProgectDir + '\Avatar' + ext;
+        FAvatarFileName := FRepositoryDir + '\Avatar' + ext;
         TFile.WriteAllBytes(FAvatarFileName, RESTResponse.RawBytes);
         ImagRepository.Picture.LoadFromFile(FAvatarFileName);
       end;
@@ -401,7 +401,7 @@ begin
 
       if RESTResponse.JSONValue.FindValue('tag_name') <> nil then
       begin
-        mm.Lines.Add('Имя релиза: ' + FProjectName);
+        mm.Lines.Add('Имя релиза: ' + FRepositoryName);
         FLastReleaseVersion := RESTResponse.JSONValue.FindValue('tag_name').Value;
         FPublishRelease     := RESTResponse.JSONValue.FindValue('published_at').Value;
         FPublishRelease     := ConvertGitHubDateToDateTime(FPublishRelease);
@@ -418,10 +418,10 @@ begin
     with arReposList[Length(arReposList) - 1] do
     begin
       ReposUrl         := edRepositoryLink.Text;
-      ReposDir         := FProgectDir;
-      ApiReposUrl      := FApiProject;
+      ReposDir         := FRepositoryDir;
+      ApiReposUrl      := FApiRepository;
       ApiReleasesUrl   := FApiReleases;
-      ReposName        := FProjectName;
+      ReposName        := FRepositoryName;
       FullReposName    := FFullName;
       AvatarFile       := FAvatarFileName;
       AvatarUrl        := FAvatar_url;
@@ -437,7 +437,7 @@ begin
       AddVerToFileName := ChBoxAddVerToFileName.Checked;
     end;
 
-    SaveAddedNewProject(Length(arReposList) - 1);
+    SaveAddedNewRepository(Length(arReposList) - 1);
 
     Applay := true;
     BtnApply.Enabled := true;

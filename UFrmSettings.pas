@@ -14,7 +14,7 @@ type
     LblNewReleaseLive: TLabel;
     SpEditHours: TSpinEdit;
     LblHoursLimit: TLabel;
-    edDefaultProjectDir: TEdit;
+    edDefaultReposDir: TEdit;
     StTextDefReleasesDir: TStaticText;
     cbxVclStyles: TComboBox;
     LblSelectStyle: TLabel;
@@ -83,7 +83,7 @@ var
   StyleName: string;
   x: UInt16;
 begin
-  EdDefaultProjectDir.Text := GLProjectsDir;
+  edDefaultReposDir.Text := GLReposDir;
   for StyleName in TStyleManager.StyleNames do cbxVclStyles.Items.Add(StyleName);
   cbxVclStyles.ItemIndex := cbxVclStyles.Items.IndexOf(GLStyleName);
 end;
@@ -110,7 +110,7 @@ begin
   INI := TIniFile.Create(FileConfig);
   Section := 'SETTINGS';
   try
-    INI.WriteString(Section, 'DefaultProjectDir', edDefaultProjectDir.Text);
+    INI.WriteString(Section, 'DefaultRepositoryDir', edDefaultReposDir.Text);
     INI.WriteString(Section, 'StyleName', cbxVclStyles.Items[cbxVclStyles.ItemIndex]);
     INI.WriteInteger(Section, 'NewReleasesLive', SpEditHours.Value);
   finally
@@ -123,7 +123,7 @@ var
   SelDir: String;
 begin
   SelectDirectory('Выберите каталог', '', SelDir);
-  EdDefaultProjectDir.Text := SelDir;
+  edDefaultReposDir.Text := SelDir;
 end;
 
 end.

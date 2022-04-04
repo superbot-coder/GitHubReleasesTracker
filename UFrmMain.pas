@@ -50,7 +50,7 @@ type
     PM_DeletRepository: TMenuItem;
     TimerTracker: TTimer;
     PM_OneRepositoryCheck: TMenuItem;
-    LVProj: TListView;
+    LVRepos: TListView;
     mmInfo: TMemo;
     BtnTest: TButton;
     Y1: TMenuItem;
@@ -72,7 +72,7 @@ type
     procedure RemoveRepositoryFromReposList(FullRepositoryName: String);
     procedure ReposListUpdateVisible;
     procedure AddLog(StrMsg: String);
-    procedure LVProjColumnClick(Sender: TObject; Column: TListColumn);
+    procedure LVReposColumnClick(Sender: TObject; Column: TListColumn);
     function GetWayToSortet(ColumnIndex: UInt8): TSortType;
     function GetRepositoryIndex(ReposytoryName: string): Integer;
     procedure TimerTrackerTimer(Sender: TObject);
@@ -99,8 +99,8 @@ var
   TEMP              : string;
   ConfigDir         : string;
   FileConfig        : string;
-  GLProjectsDir     : String;
-  GLDefProjectsDir  : string;
+  GLReposDir        : String;
+  GLDefReposDir     : string;
   GLStyleName       : String;
   GLStyleIcon       : Byte;
   arReposList       : array of TRepositoryListRec;
@@ -159,7 +159,7 @@ end;
 function TFrmMain.AddItems: Integer;
 var i: byte;
 begin
-  with LVProj.Items.Add do
+  with LVRepos.Items.Add do
   begin
     Caption    := '';
     Result     := Index;
@@ -198,7 +198,7 @@ begin
   TEMP       := GetEnvironmentVariable('TEMP');
   ConfigDir  := GetEnvironmentVariable('APPDATA') + '\GitHubReleasesTracker';
   FileConfig := ConfigDir + '\Config.ini';
-  GLDefProjectsDir := GetEnvironmentVariable('USERPROFILE') + '\Downloads\GitHubReleasesTracker';
+  GLDefReposDir := GetEnvironmentVariable('USERPROFILE') + '\Downloads\GitHubReleasesTracker';
 
   LoadConfigAndProjectList(loadAllConfig);
 
@@ -206,7 +206,7 @@ begin
   if AnsiMatchStr(GLStyleName, arDarkStyles) then GLStyleIcon := 2 else GLStyleIcon := 0;
   TStyleManager.SetStyle(GLStyleName);
 
-  if GLProjectsDir = '' then GLProjectsDir := GLDefProjectsDir;
+  if GLReposDir = '' then GLReposDir := GLDefReposDir;
 
   ReposListUpdateVisible;
   for b := 0 to Length(ArSortColumnsPos) -1 do ArSortColumnsPos[b] := stASC;
@@ -233,11 +233,11 @@ var
 begin
   r := 0;
   x := 1;
-  with LVProj do
+  with LVRepos do
   begin
     if ColumnIndex = 0 then
     begin
-      while (x < LVProj.Items.Count-1) do
+      while (x < LVRepos.Items.Count-1) do
       begin
         r := AnsiCompareText(Items[0].Caption, Items[x].Caption);
         if r <> 0 then Break;
@@ -246,7 +246,7 @@ begin
     end
       else
     begin
-      while (x < LVProj.Items.Count) do
+      while (x < LVRepos.Items.Count) do
       begin
         r := AnsiCompareText(Items[0].SubItems[ColumnIndex-1], Items[x].SubItems[ColumnIndex-1]);
         if r <> 0 then Break;
@@ -279,14 +279,14 @@ begin
     if LoadConfigType = loadAllConfig then
     begin
       Section       := 'SETTINGS';
-      GLProjectsDir := INI.ReadString(Section, 'DefaultProjectDir','');
+      GLReposDir    := INI.ReadString(Section, 'DefaultRepositoryDir','');
       GLStyleName   := INI.ReadString(Section, 'StyleName', c_def_style);
       GLNewReleasesLive := INI.ReadInteger(Section, 'NewReleasesLive', c_def_releases_live);
     end;
 
     // Загрузка списка проектов PROJECT_LIST
 
-    LVProj.Clear;
+    LVRepos.Clear;
     Section := 'PROJECT_LIST';
     INI.ReadSubSections(Section, ST, false);
     arReposList := Nil;
@@ -296,12 +296,12 @@ begin
       SubSection := Section + '\' + ST.Strings[i];
       with arReposList[i] do
       begin
-        ReposUrl        := INI.ReadString(SubSection, 'ProjectUrl', '');
-        ReposDir        := INI.ReadString(SubSection, 'ProjectDir','');
-        ApiReposUrl     := INI.ReadString(SubSection, 'ApiProjectUrl','');
+        ReposUrl        := INI.ReadString(SubSection, 'RepositoryUrl', '');
+        ReposDir        := INI.ReadString(SubSection, 'RepositoryDir','');
+        ApiReposUrl     := INI.ReadString(SubSection, 'ApiRepositoryUrl','');
         ApiReleasesUrl  := INI.ReadString(SubSection, 'ApiReleasesUrl','');
-        ReposName       := INI.ReadString(SubSection, 'ProjectName','');
-        FullReposName   := INI.ReadString(SubSection, 'FullProjectName', '');
+        ReposName       := INI.ReadString(SubSection, 'RepositoryName','');
+        FullReposName   := INI.ReadString(SubSection, 'FullRepositoryName', '');
         AvatarFile      := INI.ReadString(SubSection, 'AvatarFile','');
         AvatarUrl       := INI.ReadString(SubSection, 'AvatarUrl','');
         FilterInclude   := INI.ReadString(SubSection, 'FilterInclude','');
@@ -333,7 +333,7 @@ begin
   {
   i := Length(arReposList)-1;
   x := AddItems;
-  with LVProj.Items[x] do
+  with LVRepos.Items[x] do
   begin
     Caption                      := arReposList[i].FullProjectName;
     SubItems[lv_proj_version]    := arReposList[i].LastVersion;
@@ -547,14 +547,12 @@ begin
         mmInfo.Lines.Add('Ошибка файл: ' + SavedFileName + ' не обнаружен.');
     end;
 
-
   finally
     STFilters.Free;
     STFilesURL.Free;
-    FrmAddRepository.SaveAddedNewProject(ReposIndex);
+    FrmAddRepository.SaveAddedNewRepository(ReposIndex);
     ReposListUpdateVisible;
   end;
-
 end;
 
 procedure TFrmMain.PM_DeletRepositoryClick(Sender: TObject);
@@ -562,9 +560,9 @@ Var
   DelProjName: string;
   INI: TIniFile;
 begin
-  DelProjName := LVProj.Selected.Caption;
+  DelProjName := LVRepos.Selected.Caption;
 
-  RemoveRepositoryFromReposList(LVProj.Selected.Caption);
+  RemoveRepositoryFromReposList(LVRepos.Selected.Caption);
   ReposListUpdateVisible;
 
   INI := TIniFile.Create(FileConfig);
@@ -577,12 +575,12 @@ end;
 
 procedure TFrmMain.PM_DownloadFilesClick(Sender: TObject);
 begin
-  FrmDownloadFiles.ShowInit(Nil, GetRepositoryIndex(LVProj.Selected.Caption));
+  FrmDownloadFiles.ShowInit(Nil, GetRepositoryIndex(LVRepos.Selected.Caption));
 end;
 
 procedure TFrmMain.PM_OneRepositoryCheckClick(Sender: TObject);
 begin
-  OneReleaseCheck(GetRepositoryIndex(LVProj.Selected.Caption));
+  OneReleaseCheck(GetRepositoryIndex(LVRepos.Selected.Caption));
 end;
 
 procedure TFrmMain.PM_OpenDirClick(Sender: TObject);
@@ -590,7 +588,7 @@ var
   i: Word;
   ProjDir: string;
 begin
-  i := GetRepositoryIndex(LVProj.Selected.Caption);
+  i := GetRepositoryIndex(LVRepos.Selected.Caption);
   ProjDir := arReposList[i].ReposDir;
   if arReposList[i].NeedSubDir then
     if DirectoryExists(ProjDir + '\' +arReposList[i].LastVersion) then
@@ -601,13 +599,13 @@ end;
 procedure TFrmMain.PM_OpenUrlClick(Sender: TObject);
 begin
   ShellExecute(Handle, PChar('Open'),
-               PChar(arReposList[GetRepositoryIndex(LVProj.Selected.Caption)].ReposUrl),
+               PChar(arReposList[GetRepositoryIndex(LVRepos.Selected.Caption)].ReposUrl),
                Nil, Nil, SW_SHOWMAXIMIZED);
 end;
 
 procedure TFrmMain.PopupMenuPopup(Sender: TObject);
 begin
-  if (LVProj.Items.Count = 0) or (LVProj.SelCount = 0) then
+  if (LVRepos.Items.Count = 0) or (LVRepos.SelCount = 0) then
   begin
     PM_DeletRepository.Visible    := false;
     PM_OneRepositoryCheck.Visible := false;
@@ -629,7 +627,7 @@ end;
 
 procedure TFrmMain.PM_EditSettingsClick(Sender: TObject);
 begin
-  FrmAddRepository.FormShowEdit(GetRepositoryIndex(LVProj.Selected.Caption));
+  FrmAddRepository.FormShowEdit(GetRepositoryIndex(LVRepos.Selected.Caption));
 end;
 
 procedure TFrmMain.ReposListUpdateVisible;
@@ -637,15 +635,15 @@ var
   i, x, len: Word;
   dt, dtl: TDateTime; //localized  date time
 begin
-  LVProj.Items.Clear;
+  LVRepos.Items.Clear;
   len := Length(arReposList);
   if len = 0 then Exit;
 
-  LVProj.Items.BeginUpdate;
+  LVRepos.Items.BeginUpdate;
   for i := 0 to Len-1 do
   begin
     x := AddItems;
-    with LVProj.Items[x] do
+    with LVRepos.Items[x] do
     begin
       Caption                      := arReposList[i].FullReposName;
       SubItems[lv_proj_version]    := arReposList[i].LastVersion;
@@ -663,7 +661,7 @@ begin
 
     end;
   end;
-  LVProj.Items.EndUpdate;
+  LVRepos.Items.EndUpdate;
 end;
 
 procedure TFrmMain.RepositoryTracking;
@@ -712,22 +710,13 @@ var
   s: string;
   v: string;
 begin
-
-  //RESTResponse.RootElement := '[0]';
-  //RESTClient.Accept        := arContentTypeStr[ord(ctAPPLICATION_JSON)];
-  //RESTClient.BaseURL       := arReposList[0].ApiReleasesUrl;
-  // RESTRequest.Execute;
-
-  //if RESTResponse.StatusCode <> 200 then Exit;
-
-  FrmDownloadFiles.ShowInit(Nil, 0);
-
+  //
 end;
 
-procedure TFrmMain.LVProjColumnClick(Sender: TObject; Column: TListColumn);
+procedure TFrmMain.LVReposColumnClick(Sender: TObject; Column: TListColumn);
 var i: SmallInt;
 begin
-  if LVProj.Items.Count < 2 then exit;
+  if LVRepos.Items.Count < 2 then exit;
 
   {
   if LastColumnSorted <> Column.Index then
@@ -739,7 +728,7 @@ begin
   // The function GetWayToSortet() determines the direction of sorting
   ArSortColumnsPos[Column.Index] := GetWayToSortet(Column.Index);
 
-  LVProj.CustomSort(@CustomSortProc, Column.Index);
+  LVRepos.CustomSort(@CustomSortProc, Column.Index);
 
   if ArSortColumnsPos[Column.Index] = stASC then
     ArSortColumnsPos[Column.Index] := stDESC
