@@ -4,8 +4,8 @@ object FrmDownloadFiles: TFrmDownloadFiles
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   Caption = #1057#1082#1072#1095#1080#1074#1072#1085#1080#1077' '#1092#1072#1081#1083#1086#1074
-  ClientHeight = 445
-  ClientWidth = 542
+  ClientHeight = 637
+  ClientWidth = 553
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -16,64 +16,40 @@ object FrmDownloadFiles: TFrmDownloadFiles
   Position = poScreenCenter
   OnCreate = FormCreate
   OnDestroy = FormDestroy
+  DesignSize = (
+    553
+    637)
   PixelsPerInch = 96
   TextHeight = 13
-  object LVFiles: TListView
-    Left = 0
-    Top = 97
-    Width = 542
-    Height = 304
-    Align = alTop
-    Checkboxes = True
-    Columns = <
-      item
-        Caption = #1060#1072#1081#1083#1099' '#1076#1083#1103' '#1089#1082#1072#1095#1080#1074#1072#1085#1080#1103
-        Width = 300
-      end
-      item
-        Alignment = taCenter
-        Caption = #1056#1072#1079#1084#1077#1088
-        Width = 100
-      end
-      item
-        Alignment = taCenter
-        Caption = #1057#1090#1072#1090#1091#1089
-        Width = 100
-      end>
-    HideSelection = False
-    ReadOnly = True
-    RowSelect = True
-    PopupMenu = PopupMenu
-    SmallImages = ImageList
-    TabOrder = 0
-    ViewStyle = vsReport
-  end
   object BtnApply: TButton
-    Left = 184
-    Top = 408
+    Left = 205
+    Top = 600
     Width = 153
     Height = 30
+    Anchors = [akBottom]
     Caption = #1057#1050#1040#1063#1040#1058#1068
-    TabOrder = 1
+    TabOrder = 0
     OnClick = BtnApplyClick
   end
   object BtnClose: TButton
-    Left = 440
-    Top = 408
+    Left = 443
+    Top = 600
     Width = 91
     Height = 30
+    Anchors = [akRight, akBottom]
     Caption = #1047#1040#1050#1056#1067#1058#1068
-    TabOrder = 2
+    TabOrder = 1
     OnClick = BtnCloseClick
   end
   object PnlBoard: TPanel
     Left = 0
     Top = 0
-    Width = 542
+    Width = 553
     Height = 97
     Align = alTop
     BevelOuter = bvNone
-    TabOrder = 3
+    TabOrder = 2
+    ExplicitWidth = 542
     object LblFilterInclude: TLabel
       Left = 8
       Top = 11
@@ -91,7 +67,7 @@ object FrmDownloadFiles: TFrmDownloadFiles
     object EdFilterInclude: TEdit
       Left = 128
       Top = 8
-      Width = 401
+      Width = 409
       Height = 21
       MaxLength = 1000
       TabOrder = 0
@@ -99,13 +75,13 @@ object FrmDownloadFiles: TFrmDownloadFiles
     object EdFilterExclude: TEdit
       Left = 128
       Top = 40
-      Width = 401
+      Width = 409
       Height = 21
       MaxLength = 1000
       TabOrder = 1
     end
     object BtnApplyFilter: TButton
-      Left = 312
+      Left = 320
       Top = 66
       Width = 137
       Height = 25
@@ -114,13 +90,76 @@ object FrmDownloadFiles: TFrmDownloadFiles
       OnClick = BtnApplyFilterClick
     end
     object BtnSaveFilter: TButton
-      Left = 456
+      Left = 464
       Top = 66
       Width = 75
       Height = 25
       Caption = #1057#1086#1093#1088#1072#1085#1080#1090#1100' '
       TabOrder = 3
       OnClick = BtnSaveFilterClick
+    end
+  end
+  object PnlInfo: TPanel
+    Left = 0
+    Top = 97
+    Width = 553
+    Height = 344
+    Align = alTop
+    BevelOuter = bvNone
+    TabOrder = 3
+    object mmBody: TMemo
+      Left = 8
+      Top = 8
+      Width = 537
+      Height = 328
+      Align = alCustom
+      Anchors = [akLeft, akTop, akRight, akBottom]
+      ReadOnly = True
+      ScrollBars = ssVertical
+      TabOrder = 0
+      ExplicitWidth = 521
+      ExplicitHeight = 185
+    end
+  end
+  object PnlFilesList: TPanel
+    Left = 0
+    Top = 441
+    Width = 553
+    Height = 153
+    Align = alTop
+    BevelOuter = bvNone
+    TabOrder = 4
+    ExplicitTop = 320
+    object LVFiles: TListView
+      Left = 8
+      Top = 8
+      Width = 537
+      Height = 136
+      Align = alCustom
+      Anchors = [akLeft, akTop, akRight, akBottom]
+      Checkboxes = True
+      Columns = <
+        item
+          Caption = #1060#1072#1081#1083#1099' '#1076#1083#1103' '#1089#1082#1072#1095#1080#1074#1072#1085#1080#1103
+          Width = 300
+        end
+        item
+          Alignment = taCenter
+          Caption = #1056#1072#1079#1084#1077#1088
+          Width = 100
+        end
+        item
+          Alignment = taCenter
+          Caption = #1057#1090#1072#1090#1091#1089
+          Width = 100
+        end>
+      HideSelection = False
+      ReadOnly = True
+      RowSelect = True
+      PopupMenu = PopupMenu
+      SmallImages = ImageList
+      TabOrder = 0
+      ViewStyle = vsReport
     end
   end
   object ImageList: TImageList

@@ -34,6 +34,20 @@ object FrmAddRepository: TFrmAddRepository
     Caption = '...'
     OnClick = SpdBtnOpenDirClick
   end
+  object LblIntervalAvtoCheck: TLabel
+    Left = 24
+    Top = 144
+    Width = 199
+    Height = 13
+    Caption = #1048#1085#1090#1077#1088#1074#1072#1083' '#1087#1088#1086#1074#1077#1088#1082#1080' '#1086#1073#1085#1086#1074#1083#1077#1085#1080#1103' ('#1095#1072#1089#1099')'
+  end
+  object LblAvtoCheckInfo: TLabel
+    Left = 304
+    Top = 144
+    Width = 170
+    Height = 13
+    Caption = #1084#1080#1085#1080#1084#1091#1084': 1 '#1095#1072#1089', '#1084#1072#1082#1089#1080#1084#1091#1084': 7 '#1076#1085#1077#1081
+  end
   object edRepositoryLink: TEdit
     Left = 16
     Top = 32
@@ -58,7 +72,7 @@ object FrmAddRepository: TFrmAddRepository
   end
   object ChBoxSubDir: TCheckBox
     Left = 24
-    Top = 168
+    Top = 200
     Width = 209
     Height = 17
     Caption = #1044#1083#1103' '#1082#1072#1078#1076#1086#1075#1086' '#1088#1077#1083#1080#1079#1072' '#1089#1091#1073#1076#1080#1088#1077#1082#1090#1086#1088#1080#1103
@@ -68,17 +82,17 @@ object FrmAddRepository: TFrmAddRepository
   end
   object ChBoxDownloadLastRelease: TCheckBox
     Left = 24
-    Top = 144
-    Width = 281
+    Top = 176
+    Width = 305
     Height = 17
     Caption = #1057#1082#1072#1095#1072#1090#1100' '#1092#1072#1081#1083#1099' '#1088#1077#1083#1080#1079#1072' '#1087#1086#1089#1083#1077' '#1076#1086#1073#1072#1074#1083#1077#1085#1080#1103' '#1088#1077#1087#1086#1079#1080#1090#1086#1088#1080#1103
     TabOrder = 3
   end
   object mm: TMemo
     Left = 16
-    Top = 408
+    Top = 448
     Width = 553
-    Height = 89
+    Height = 49
     TabOrder = 4
   end
   object Panel: TPanel
@@ -124,7 +138,7 @@ object FrmAddRepository: TFrmAddRepository
   end
   object RGRulesNotis: TRadioGroup
     Left = 344
-    Top = 176
+    Top = 208
     Width = 225
     Height = 121
     Caption = #1055#1088#1072#1074#1080#1083#1072':'
@@ -137,7 +151,7 @@ object FrmAddRepository: TFrmAddRepository
   end
   object RGRuleDownload: TRadioGroup
     Left = 16
-    Top = 224
+    Top = 256
     Width = 297
     Height = 73
     Caption = #1055#1088#1080#1074#1080#1083#1072' '#1089#1082#1072#1095#1080#1074#1072#1085#1080#1103' '#1092#1072#1081#1083#1086#1074
@@ -149,7 +163,7 @@ object FrmAddRepository: TFrmAddRepository
   end
   object GrBoxFilter: TGroupBox
     Left = 16
-    Top = 312
+    Top = 344
     Width = 553
     Height = 81
     Caption = #1060#1080#1083#1100#1090#1088' ('#1074#1087#1080#1096#1080#1090#1077' '#1089#1083#1086#1074#1072' '#1095#1077#1088#1077#1079' '#1079#1072#1087#1103#1090#1091#1102'):'
@@ -196,10 +210,20 @@ object FrmAddRepository: TFrmAddRepository
   end
   object ChBoxAddVerToFileName: TCheckBox
     Left = 24
-    Top = 192
+    Top = 224
     Width = 249
     Height = 17
     Caption = #1055#1088#1080#1073#1072#1074#1083#1103#1090#1100' '#1082' '#1080#1084#1077#1085#1080' '#1092#1072#1081#1083#1072' '#1074#1077#1088#1089#1080#1102' '#1088#1077#1083#1080#1079#1072
     TabOrder = 12
+  end
+  object SpEdTimeAutoCheck: TSpinEdit
+    Left = 232
+    Top = 138
+    Width = 57
+    Height = 22
+    MaxValue = 168
+    MinValue = 1
+    TabOrder = 13
+    Value = 24
   end
 end

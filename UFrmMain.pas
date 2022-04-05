@@ -19,20 +19,21 @@ type
     ApiReposUrl    : string; // Api repository URL
     ApiReleasesUrl : string; // Api Repository Releases URL
     ReposName      : string; // Repository name
-    FullReposName  : string;
-    AvatarFile     : string;
-    AvatarUrl      : string;
-    FilterInclude  : string;
-    FilterExclude  : string;
-    DatePublish    : string;
-    Language       : string;
-    LastVersion    : string;
-    LastChecked    : TDateTime;
-    RuleDownload   : UInt8;
-    RuleNotis      : UInt8;
-    NeedSubDir     : Boolean;
-    NewReleaseDT   : TDateTime;
-    AddVerToFileName: Boolean;
+    FullReposName  : string; //
+    AvatarFile     : string; //
+    AvatarUrl      : string; //
+    FilterInclude  : string; //
+    FilterExclude  : string; //
+    DatePublish    : string; // Дата публикации релиза на GitHub
+    Language       : string; // Язык программирования репозитория (бонус)
+    LastVersion    : string; // Последняя версия релиза
+    LastChecked    : TDateTime; // Дата и время последней проверки
+    RuleDownload   : UInt8;     // Параметры правила для скасивания
+    RuleNotis      : UInt8;     // Параметры правила для уведомления об новой версии
+    NeedSubDir     : Boolean;   // необходимость субдиректории для каждого редиза
+    NewReleaseDT   : TDateTime; // Дата и время скачивания нового релиза
+    AddVerToFileName: Boolean;  // Прибавлять версию релиза к сохраняемому файлу
+    TimelAvtoCheck : Byte;      // Время интервала для автоматической проверки релиза
   End;
 
 type TLoadConfigsType = (loadAllConfig, loadProjList); 
@@ -61,7 +62,7 @@ type
     PM_EditSettings: TMenuItem;
     PM_DownloadFiles: TMenuItem;
     Help: TMenuItem;
-    MM_Update: TMenuItem;
+    MM_CheckMainUpdate: TMenuItem;
     MM_OpenGitHubRepos: TMenuItem;
     procedure MM_AddRepositoryClick(Sender: TObject);
     function AddItems: Integer;
@@ -86,6 +87,8 @@ type
     procedure PM_OpenUrlClick(Sender: TObject);
     procedure PM_EditSettingsClick(Sender: TObject);
     procedure PM_DownloadFilesClick(Sender: TObject);
+    procedure MM_OpenGitHubReposClick(Sender: TObject);
+    procedure MM_CheckMainUpdateClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -315,6 +318,7 @@ begin
         NeedSubDir      := INI.ReadBool(SubSection, 'NeedSubDir', true);
         NewReleaseDT    := INI.ReadDateTime(SubSection, 'NewReleaseDT', 0);
         AddVerToFileName:= INI.ReadBool(SubSection, 'AddVerToFileName', false);
+        TimelAvtoCheck  := INI.ReadInteger(SubSection, 'TimeAuvtoCheck', 24);
       end;
     end;
   finally
@@ -345,9 +349,25 @@ begin
   }
 end;
 
+procedure TFrmMain.MM_OpenGitHubReposClick(Sender: TObject);
+begin
+  ShellExecute(Handle, PChar('Open'),
+               PChar('https://github.com/superbot-coder/GitHubReleasesTracker'),
+               Nil, Nil, SW_SHOWNORMAL);
+end;
+
 procedure TFrmMain.MM_SettingsClick(Sender: TObject);
 begin
   FrmSettings.FormShowInit;
+end;
+
+procedure TFrmMain.MM_CheckMainUpdateClick(Sender: TObject);
+begin
+  TimerTracker.Enabled := false;
+
+  FrmDownloadFiles.ShowInit(Nil, 0, Sender);
+
+  TimerTracker.Enabled := true;
 end;
 
 procedure TFrmMain.OneReleaseCheck(ReposIndex: Integer);
@@ -560,11 +580,13 @@ Var
   DelProjName: string;
   INI: TIniFile;
 begin
-  DelProjName := LVRepos.Selected.Caption;
+  if MessageBox(Handle, PChar('Вы собераетесь удалить репозиторий из списка'
+                + #13#10 + ' Продолжить?'),
+                PChar(CAPTION_MB), MB_ICONWARNING or MB_YESNO) = ID_NO then Exit;
 
+  DelProjName := LVRepos.Selected.Caption;
   RemoveRepositoryFromReposList(LVRepos.Selected.Caption);
   ReposListUpdateVisible;
-
   INI := TIniFile.Create(FileConfig);
   try
     INI.EraseSection('PROJECT_LIST\' + DelProjName);
@@ -575,7 +597,7 @@ end;
 
 procedure TFrmMain.PM_DownloadFilesClick(Sender: TObject);
 begin
-  FrmDownloadFiles.ShowInit(Nil, GetRepositoryIndex(LVRepos.Selected.Caption));
+  FrmDownloadFiles.ShowInit(Nil, GetRepositoryIndex(LVRepos.Selected.Caption), nil);
 end;
 
 procedure TFrmMain.PM_OneRepositoryCheckClick(Sender: TObject);
@@ -600,7 +622,7 @@ procedure TFrmMain.PM_OpenUrlClick(Sender: TObject);
 begin
   ShellExecute(Handle, PChar('Open'),
                PChar(arReposList[GetRepositoryIndex(LVRepos.Selected.Caption)].ReposUrl),
-               Nil, Nil, SW_SHOWMAXIMIZED);
+               Nil, Nil, SW_SHOWNORMAL);
 end;
 
 procedure TFrmMain.PopupMenuPopup(Sender: TObject);

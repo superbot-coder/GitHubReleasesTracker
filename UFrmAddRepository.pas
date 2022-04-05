@@ -7,7 +7,7 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Mask,
   Vcl.ComCtrls, System.ImageList, Vcl.ImgList, json, System.IOUtils,
   REST.Types, RESTContentTypeStr, StrUtils,
-  Vcl.ExtCtrls, System.IniFiles, Vcl.Buttons, Vcl.FileCtrl;
+  Vcl.ExtCtrls, System.IniFiles, Vcl.Buttons, Vcl.FileCtrl, Vcl.Samples.Spin;
 
 type TFrmShowMode = (fsmAddNew, fsmEdit);
 
@@ -34,6 +34,9 @@ type
     LblInclude: TLabel;
     BtnClose: TButton;
     ChBoxAddVerToFileName: TCheckBox;
+    LblIntervalAvtoCheck: TLabel;
+    SpEdTimeAutoCheck: TSpinEdit;
+    LblAvtoCheckInfo: TLabel;
     procedure BtnApplyClick(Sender: TObject);
     function ConverLinkToApiLink(Link: String): String;
     procedure FrmShowInit;
@@ -159,6 +162,7 @@ begin
   BtnApply.Caption         := 'С О Х Р А Н И Т Ь';
   if FileExists(arReposList[ReposIndex].AvatarFile) then
     ImagRepository.Picture.LoadFromFile(arReposList[ReposIndex].AvatarFile);
+  SpEdTimeAutoCheck.Value  := arReposList[ReposIndex].TimelAvtoCheck;
 
   ShowModal;
 end;
@@ -169,9 +173,9 @@ begin
   FFrmMode := fsmAddNew;
   edRepositoryLink.Text    := '';
   edRepositoryLink.Enabled := true;
-  edSaveDir.Text        := '';
-  BtnApply.Enabled      := False;
-  BtnApply.Caption      := 'Д О Б А В И Т Ь';
+  edSaveDir.Text           := '';
+  BtnApply.Enabled         := False;
+  BtnApply.Caption         := 'Д О Б А В И Т Ь';
   ImagRepository.Picture   := Nil;
   RGRuleDownload.ItemIndex := 0;
   RGRulesNotis.ItemIndex   := 0;
@@ -180,6 +184,7 @@ begin
   ChBoxDownloadLastRelease.Enabled := True;
   EdFilterInclude.Text := 'windows, win, win64, 64bit';
   edFilterExclude.Text := 'mac, linux, 32bit';
+  SpEdTimeAutoCheck.Value := 24;
 
   mm.Clear;
 
@@ -247,6 +252,7 @@ begin
       WriteBool(Section, 'NeedSubDir', arReposList[Index].NeedSubDir);
       WriteDateTime(Section, 'NewReleaseDT', arReposList[Index].NewReleaseDT);
       WriteBool(Section, 'AddVerToFileName', arReposList[Index].AddVerToFileName);
+      WriteInteger(Section, 'TimeAvtoCheck', arReposList[Index].TimelAvtoCheck);
     end;
   finally
     INI.Free;
@@ -279,6 +285,7 @@ begin
       FilterInclude := EdFilterInclude.Text;
       FilterExclude := edFilterExclude.Text;
       AddVerToFileName := ChBoxAddVerToFileName.Checked;
+      TimelAvtoCheck := SpEdTimeAutoCheck.Value;
     end;
     SaveAddedNewRepository(FReposIndex);
   end;
@@ -396,7 +403,7 @@ begin
         mm.Lines.Add('Не найдено ни одного опубликованого релиза.');
         mm.Lines.Add('Проверка выполнена.');
         MessageBox(Handle, PChar(mm.Lines.Text),
-                PChar(CAPTION_MB), MB_ICONINFORMATION);
+                   PChar(CAPTION_MB), MB_ICONINFORMATION);
       end;
 
       if RESTResponse.JSONValue.FindValue('tag_name') <> nil then
@@ -435,6 +442,7 @@ begin
       RuleNotis        := RGRulesNotis.ItemIndex;
       NewReleaseDT     := Date + Time;
       AddVerToFileName := ChBoxAddVerToFileName.Checked;
+      TimelAvtoCheck   := SpEdTimeAutoCheck.Value;
     end;
 
     SaveAddedNewRepository(Length(arReposList) - 1);

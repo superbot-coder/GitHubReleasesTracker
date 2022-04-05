@@ -21,7 +21,7 @@ object FrmMain: TFrmMain
   TextHeight = 13
   object LVRepos: TListView
     Left = 8
-    Top = 16
+    Top = 8
     Width = 1049
     Height = 417
     Anchors = [akLeft, akTop, akRight, akBottom]
@@ -94,17 +94,18 @@ object FrmMain: TFrmMain
     Top = 440
     Width = 121
     Height = 25
+    Anchors = [akLeft, akBottom]
     Caption = 'T E S T'
     TabOrder = 2
     OnClick = BtnTestClick
   end
   object MainMenu: TMainMenu
-    Left = 184
+    Left = 288
     Top = 168
     object U1: TMenuItem
       Caption = #1043#1083#1072#1074#1085#1086#1077
       object MM_AddRepository: TMenuItem
-        Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1088#1087#1086#1079#1080#1090#1086#1088#1080#1081
+        Caption = #1044#1086#1073#1072#1074#1080#1090#1100' '#1088#1077#1087#1086#1079#1080#1090#1086#1088#1080#1081
         OnClick = MM_AddRepositoryClick
       end
     end
@@ -117,11 +118,13 @@ object FrmMain: TFrmMain
     end
     object Help: TMenuItem
       Caption = '??'
-      object MM_Update: TMenuItem
+      object MM_CheckMainUpdate: TMenuItem
         Caption = #1055#1088#1086#1074#1077#1088#1080#1090#1100' '#1086#1073#1085#1086#1074#1083#1077#1085#1080#1077
+        OnClick = MM_CheckMainUpdateClick
       end
       object MM_OpenGitHubRepos: TMenuItem
         Caption = #1056#1077#1087#1086#1079#1080#1090#1086#1088#1080#1081' '#1087#1088#1086#1075#1088#1072#1084#1084#1099' '#1085#1072' GitHub'
+        OnClick = MM_OpenGitHubReposClick
       end
     end
   end
@@ -738,21 +741,22 @@ object FrmMain: TFrmMain
       000000000000}
   end
   object RESTClient: TRESTClient
+    AcceptCharset = 'utf-8, *;q=0.8'
     Params = <>
-    Left = 184
-    Top = 232
+    Left = 280
+    Top = 240
   end
   object RESTRequest: TRESTRequest
     Client = RESTClient
     Params = <>
     Response = RESTResponse
     SynchronizedEvents = False
-    Left = 272
-    Top = 232
+    Left = 368
+    Top = 240
   end
   object RESTResponse: TRESTResponse
-    Left = 368
-    Top = 232
+    Left = 464
+    Top = 240
   end
   object PopupMenu: TPopupMenu
     OnPopup = PopupMenuPopup
@@ -771,7 +775,7 @@ object FrmMain: TFrmMain
       OnClick = PM_OpenDirClick
     end
     object PM_OpenUrl: TMenuItem
-      Caption = #1054#1090#1082#1088#1099#1090#1100' '#1074#1077#1073' '#1089#1090#1088#1072#1085#1080#1094#1091' '#1088#1077#1087#1086#1079#1080#1090#1086#1088#1080#1103
+      Caption = #1054#1090#1082#1088#1099#1090#1100' '#1074#1077#1073' '#1089#1090#1088#1072#1085#1080#1094#1091' '#1085#1072' GitHub'
       SubMenuImages = ImageListRepos
       OnClick = PM_OpenUrlClick
     end

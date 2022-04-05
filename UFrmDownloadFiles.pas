@@ -25,10 +25,13 @@ type
     PopupMenu: TPopupMenu;
     PM_CheckedAllFiles: TMenuItem;
     PM_DownCheckAllFiles: TMenuItem;
+    mmBody: TMemo;
+    PnlInfo: TPanel;
+    PnlFilesList: TPanel;
     procedure BtnCloseClick(Sender: TObject);
     Function AddLVItem: integer;
     procedure BtnApplyClick(Sender: TObject);
-    procedure ShowInit(JSONData: TJSONValue; ProjectIndex: Integer);
+    procedure ShowInit(JSONData: TJSONValue; ProjectIndex: Integer; Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure ExecutFilters;
     procedure BtnApplyFilterClick(Sender: TObject);
@@ -41,12 +44,17 @@ type
     STDownloadFiles : TStrings;
     FReposIndex     : Integer;
     Ftag_name       : string;
+    FMainUpdate     : Boolean;
   public
     { Public declarations }
   end;
 
 var
   FrmDownloadFiles: TFrmDownloadFiles;
+
+const
+  MainUpdateReleaseURL = 'https://api.github.com/repos/superbot-coder/GitHubReleasesTracker/releases';
+  //MainUpdateReleaseURL = 'https://api.github.com/repos/xmrig/xmrig/releases'; // for test
 
 implementation
 
@@ -73,10 +81,14 @@ var
 begin
 
   // подготовка директорнии для скачивания; preparing a directory for download
-  if arReposList[FReposIndex].NeedSubDir then
-    DownloadDir := arReposList[FReposIndex].ReposDir + '\' + Ftag_name
+  if FMainUpdate then
+    DownloadDir := GLDefReposDir
   else
-    DownloadDir := arReposList[FReposIndex].ReposDir;
+    if arReposList[FReposIndex].NeedSubDir then
+      DownloadDir := arReposList[FReposIndex].ReposDir + '\' + Ftag_name
+    else
+      DownloadDir := arReposList[FReposIndex].ReposDir;
+
   if Not DirectoryExists(DownloadDir) then ForceDirectories(DownloadDir);
 
   for i := 0 to LVFiles.Items.Count -1 do
@@ -84,10 +96,12 @@ begin
     if Not LVFiles.Items[i].Checked then Continue;
     LVFiles.Items[i].Selected := true;
 
-    // Получаю финалное имя файла
+    // Получаю финальное имя файла
     SavedFileName := LVFiles.Items[i].Caption;
-    if arReposList[FReposIndex].AddVerToFileName then
-      insert('_' + Ftag_name, SavedFileName, LastDelimiter('.', SavedFileName)-1);
+    if Not FMainUpdate then
+      if arReposList[FReposIndex].AddVerToFileName then
+        insert('_' + Ftag_name, SavedFileName, LastDelimiter('.', SavedFileName)-1);
+
     SavedFileName := DownloadDir + '\' + SavedFileName;
 
     // Загружаю файл с GitHub
@@ -109,8 +123,8 @@ begin
     Application.ProcessMessages;
   end;
 
-
-
+  MessageBox(Handle, PChar('Закачка файлов завершена.'),
+             PChar(CAPTION_MB), MB_ICONINFORMATION);
 end;
 
 procedure TFrmDownloadFiles.BtnApplyFilterClick(Sender: TObject);
@@ -222,16 +236,115 @@ begin
   for i := 0 to LVFiles.Items.Count -1 do LVFiles.Items[i].Checked := false;
 end;
 
-procedure TFrmDownloadFiles.ShowInit(JSONData: TJSONValue; ProjectIndex: Integer);
+procedure TFrmDownloadFiles.ShowInit(JSONData: TJSONValue; ProjectIndex: Integer; Sender: TObject);
 var
   JSONArray: TJSONArray;
   i, x: Word;
   FileName: string;
   sz : string;
 begin
-  FReposIndex := ProjectIndex;
   STDownloadFiles.Clear;
   LVFiles.Clear;
+  (****************************************************************************
+    Этот блок кода отвечает за проверку обновления нового релиза
+    самой программы автора
+  ****************************************************************************)
+  if Sender <> Nil then
+  begin
+    if Sender.ClassType = TMenuItem then
+      if (Sender as TMenuItem).Name = 'MM_CheckMainUpdate' then
+      begin
+        FMainUpdate         := true;
+        Height              := 580;
+        PnlFilesList.Height := 160;
+        PnlInfo.Visible     := true;
+        PnlBoard.Visible    := false;
+        with FrmMain do
+        begin
+          RESTClient.BaseURL       := MainUpdateReleaseURL;
+          RESTClient.Accept        := arContentTypeStr[ord(ctAPPLICATION_JSON)];
+          RESTResponse.RootElement := '[0]';
+          RESTRequest.Execute;
+          if RESTResponse.StatusCode <> 200 then
+          begin
+            // msg ...
+            Exit;
+          end;
+          if RESTResponse.JSONValue = Nil then
+          begin
+            MessageBox(Handle, PChar('Не обнаружено ни одного релиза программы.'),
+                       PChar(CAPTION_MB), MB_ICONINFORMATION);
+            Exit;
+          end;
+          JSONData  := RESTResponse.JSONValue;
+          Ftag_name := JSONData.FindValue('tag_name').Value;
+
+          (*
+            Алгоритм проверки текущей версии программы и версии полученого релиза
+            Пока не реализовано..
+            If <current version> = Ftag_name then
+            begin
+              MessageBox(Handle, PChar('У вас самая актульная версия программы.'),
+                         PChar(CAPTION_MB), MB_ICONINFORMATION);
+            end;
+          *)
+
+          mmBody.Lines.Add('Обнаружена новая версия: ' + Ftag_name);
+          mmBody.Lines.Add(JSONData.FindValue('body').Value);
+          JSONArray   := JSONData.FindValue('assets') as TJSONArray;
+          for i := 0 to JSONArray.Count -1 do
+          begin
+            if JSONArray.Items[i].FindValue('browser_download_url') <> Nil then
+            begin
+              x := AddLVItem;
+              FileName := JSONArray.Items[i].FindValue('browser_download_url').Value;
+              STDownloadFiles.Add(FileName);
+              Delete(FileName, 1, LastDelimiter('/', FileName));
+              LVFiles.Items[x].Caption     := FileName;
+              sz := JSONArray.Items[i].FindValue('size').Value;
+              LVFiles.Items[x].SubItems[0] := FormatFileSize(StrToFloat(sz));
+              LVFiles.Items[x].Checked     := true;
+            end;
+          end;
+
+          x := AddLVItem;
+          FileName := JSONData.FindValue('zipball_url').Value;
+          STDownloadFiles.Add(FileName);
+          Delete(FileName, 1, LastDelimiter('/', FileName));
+          LVFiles.Items[x].Caption    := 'Source code ' + FileName + '.zip';
+          LVFiles.Items[x].ImageIndex := 1;
+          LVFiles.Items[x].Checked    := true;
+
+          (*
+            Отключил этот тип файлов. Возникает ошибка при закачке файла
+            "REST request filed: No mapping for the Unicode character existes
+            in then target multi-byte code page."
+
+          x := AddLVItem;
+          FileName := JSONData.FindValue('tarball_url').Value;
+          STDownloadFiles.Add(FileName);
+          Delete(FileName, 1, LastDelimiter('/', FileName));
+          LVFiles.Items[x].Caption := 'Source code ' + FileName + '.tar.gz';;
+          LVFiles.Items[x].ImageIndex := 1;
+          LVFiles.Items[x].Checked    := true;
+          *)
+
+        end;
+        ShowModal;
+        Exit;
+      end;
+  end;
+
+  (*****************************************************************************
+    Этот блок кода отвечает за скачивание файлов релизов
+    всех остальных репозиториев
+  *****************************************************************************)
+  FMainUpdate          := false;
+  Height               := 480;
+  PnlBoard.Visible     := true;
+  PnlInfo.Visible      := false;
+  PnlFilesList.Height  := 310;
+  FReposIndex          := ProjectIndex;
   EdFilterInclude.Text := arReposList[ProjectIndex].FilterInclude;
   EdFilterExclude.Text := arReposList[ProjectIndex].FilterExclude;
 
@@ -257,7 +370,7 @@ begin
     Exit;
   end;
 
-  Ftag_name := JSONData.FindValue('tag_name').Value;
+  Ftag_name   := JSONData.FindValue('tag_name').Value;
   if JSONData.FindValue('assets') <> Nil then
   begin;
     JSONArray := JSONData.FindValue('assets') as TJSONArray;
@@ -285,6 +398,11 @@ begin
   LVFiles.Items[x].ImageIndex := 1;
   LVFiles.Items[x].Checked    := true;
 
+ (*
+   Отключил этот тип файлов. Возникает ошибка при закачке файла
+   "REST request filed: No mapping for the Unicode character existes
+                        in then target multi-byte code page."
+
   x := AddLVItem;
   FileName := JSONData.FindValue('tarball_url').Value;
   STDownloadFiles.Add(FileName);
@@ -292,11 +410,10 @@ begin
   LVFiles.Items[x].Caption := 'Source code ' + FileName + '.tar.gz';;
   LVFiles.Items[x].ImageIndex := 1;
   LVFiles.Items[x].Checked    := true;
+  *)
 
   if arReposList[FReposIndex].RuleDownload = 1 then ExecutFilters;
-
   ShowModal;
-
 end;
 
 end.
