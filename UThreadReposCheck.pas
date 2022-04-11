@@ -1,4 +1,4 @@
-unit UThreadReposCheck;
+п»їunit UThreadReposCheck;
 
 interface
 
@@ -93,7 +93,7 @@ begin
   FDatePublish := s_temp;
   FLastChecked := Date + Time;
 
-  // ****** проверка версии релиза; verifying release version ******
+  // ****** РїСЂРѕРІРµСЂРєР° РІРµСЂСЃРёРё СЂРµР»РёР·Р°; verifying release version ******
   if (FReposRec.LastVersion <> Ftag_name) and
       (StrToDateTime(FReposRec.DatePublish) < StrToDateTime(FDatePublish)) then
   begin
@@ -104,7 +104,7 @@ begin
   FLastVersion  := Ftag_name;
   FDtNewRelease := Date + Time;
 
-  // Получаю массив загруженных файлов; Getting an array of downloaded files
+  // РџРѕР»СѓС‡Р°СЋ РјР°СЃСЃРёРІ Р·Р°РіСЂСѓР¶РµРЅРЅС‹С… С„Р°Р№Р»РѕРІ; Getting an array of downloaded files
   JSONArray := RESTResponse.JSONValue.FindValue('assets') as TJSONArray;
   if JSONArray.Count = 0 then
   begin
@@ -112,7 +112,7 @@ begin
     Exit;
   end;
 
-  // создание списка файлов для закачки; creating files list for downloasd
+  // СЃРѕР·РґР°РЅРёРµ СЃРїРёСЃРєР° С„Р°Р№Р»РѕРІ РґР»СЏ Р·Р°РєР°С‡РєРё; creating files list for downloasd
   for i := 0 to JSONArray.Count -1 do
   begin
     s_temp := JSONArray.Items[i].FindValue('browser_download_url').Value;
@@ -128,14 +128,14 @@ begin
 
   SendMsg(STFileName.Text);
 
-  // Условное скачивание, использование фильтра
+  // РЈСЃР»РѕРІРЅРѕРµ СЃРєР°С‡РёРІР°РЅРёРµ, РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ С„РёР»СЊС‚СЂР°
   // Conditional download, using a filter
   if FReposRec.RuleDownload = 1 then FiltersExecute;
 
 
-  // ****** Скачивание файлов из списка; Download files from the list ******
+  // ****** РЎРєР°С‡РёРІР°РЅРёРµ С„Р°Р№Р»РѕРІ РёР· СЃРїРёСЃРєР°; Download files from the list ******
 
-  // подготовка директорнии для скачивания; preparing a directory for download
+  // РїРѕРґРіРѕС‚РѕРІРєР° РґРёСЂРµРєС‚РѕСЂРЅРёРё РґР»СЏ СЃРєР°С‡РёРІР°РЅРёСЏ; preparing a directory for download
   if FReposRec.NeedSubDir then
     DownloadDir := FReposRec.ReposDir + '\' + Ftag_name
   else
@@ -166,9 +166,9 @@ begin
     TFile.WriteAllBytes(SavedFileName, RESTResponse.RawBytes);
 
     if FileExists(SavedFileName) then
-      SendMsg('Файл: ' + SavedFileName + ' был скачан удачно.')
+      SendMsg('Р¤Р°Р№Р»: ' + SavedFileName + ' Р±С‹Р» СЃРєР°С‡Р°РЅ СѓРґР°С‡РЅРѕ.')
     else
-      SendMsg('Ошибка файл: ' + SavedFileName + ' не обнаружен.');
+      SendMsg('РћС€РёР±РєР° С„Р°Р№Р»: ' + SavedFileName + ' РЅРµ РѕР±РЅР°СЂСѓР¶РµРЅ.');
   end;
 
   Synchronize(SaveReposRec);
@@ -189,7 +189,7 @@ var
   i, cnt: SmallInt;
   Checked: Boolean;
 begin
-  // Использую фильтр "Включить"; Use the filter "Include"
+  // РСЃРїРѕР»СЊР·СѓСЋ С„РёР»СЊС‚СЂ "Р’РєР»СЋС‡РёС‚СЊ"; Use the filter "Include"
   s_temp := StringReplace(FReposRec.FilterInclude, ' ', '', [rfReplaceAll]);
   STFilters.Text := StringReplace(s_temp, ',', #13, [rfReplaceAll]);
   cnt := 0;
@@ -211,7 +211,7 @@ begin
     Inc(cnt);
   end;
 
-  // Использую фильтр "Исключить"; Use the filter "Exclude"
+  // РСЃРїРѕР»СЊР·СѓСЋ С„РёР»СЊС‚СЂ "РСЃРєР»СЋС‡РёС‚СЊ"; Use the filter "Exclude"
   s_temp := StringReplace(FReposRec.FilterExclude, ' ', '', [rfReplaceAll]);
   STFilters.Text := StringReplace(s_temp, ',', #13, [rfReplaceAll]);
   cnt := 0;
