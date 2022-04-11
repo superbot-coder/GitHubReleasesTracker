@@ -38,14 +38,9 @@ type
     SpEdTimeAutoCheck: TSpinEdit;
     LblAvtoCheckInfo: TLabel;
     procedure BtnApplyClick(Sender: TObject);
-    function ConverLinkToApiLink(Link: String): String;
-    procedure FrmShowInit;
-    function ExtractReposNameFromLink(URL: String): String;
-    function ExcludeTrailingURLDelimiter(URL: String): String;
-    function GetImageExtention(ContentType: string): String;
     procedure edRepositoryLinkChange(Sender: TObject);
+    procedure FrmShowInit;
     procedure SaveAddedNewRepository(Index: Integer);
-    function CheckRepositoryExistes(URL: String): boolean;
     procedure SpdBtnOpenDirClick(Sender: TObject);
     procedure FormShowEdit(ReposIndex: integer);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -66,6 +61,11 @@ type
     FLanguage           : string;
     FReposIndex         : Integer;
     FFrmMode            : TFrmShowMode;
+    function ConverLinkToApiLink(Link: String): String;
+    function ExtractReposNameFromLink(URL: String): String;
+    function ExcludeTrailingURLDelimiter(URL: String): String;
+    function GetImageExtention(ContentType: string): String;
+    function CheckRepositoryExistes(URL: String): boolean;
   public
     { Public declarations }
     Applay: Boolean;
@@ -227,7 +227,7 @@ var
 begin
 
   if Not DirectoryExists(ConfigDir) then ForceDirectories(ConfigDir);
-  Section := 'PROJECT_LIST\'+ StringReplace(arReposList[Index].FullReposName, '/', '_', [rfReplaceAll]);
+  Section := 'REPOSITORY_LIST\'+ StringReplace(arReposList[Index].FullReposName, '/', '_', [rfReplaceAll]);
 
   INI := TIniFile.Create(FileConfig);
   try

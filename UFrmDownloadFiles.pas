@@ -29,11 +29,9 @@ type
     PnlInfo: TPanel;
     PnlFilesList: TPanel;
     procedure BtnCloseClick(Sender: TObject);
-    Function AddLVItem: integer;
     procedure BtnApplyClick(Sender: TObject);
     procedure ShowInit(JSONData: TJSONValue; ProjectIndex: Integer; Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure ExecutFilters;
     procedure BtnApplyFilterClick(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure BtnSaveFilterClick(Sender: TObject);
@@ -45,6 +43,8 @@ type
     FReposIndex     : Integer;
     Ftag_name       : string;
     FMainUpdate     : Boolean;
+    procedure ExecutFilters;
+    Function AddLVItem: integer;
   public
     { Public declarations }
   end;

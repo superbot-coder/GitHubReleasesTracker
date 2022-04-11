@@ -49,7 +49,6 @@ object FrmDownloadFiles: TFrmDownloadFiles
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 2
-    ExplicitWidth = 542
     object LblFilterInclude: TLabel
       Left = 8
       Top = 11
@@ -117,8 +116,6 @@ object FrmDownloadFiles: TFrmDownloadFiles
       ReadOnly = True
       ScrollBars = ssVertical
       TabOrder = 0
-      ExplicitWidth = 521
-      ExplicitHeight = 185
     end
   end
   object PnlFilesList: TPanel
@@ -129,7 +126,6 @@ object FrmDownloadFiles: TFrmDownloadFiles
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 4
-    ExplicitTop = 320
     object LVFiles: TListView
       Left = 8
       Top = 8

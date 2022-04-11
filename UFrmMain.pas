@@ -9,9 +9,10 @@ uses
   Data.Bind.Components, Data.Bind.ObjectScope, Vcl.StdCtrls,
   Vcl.ExtCtrls, Vcl.Imaging.pngimage, System.IniFiles,
   RESTContentTypeStr, System.JSON, System.IOUtils, System.StrUtils,
-  System.DateUtils, Vcl.Mask, Winapi.ShellAPI, BrightDarkSideStyles;
+  System.DateUtils, Vcl.Mask, Winapi.ShellAPI, BrightDarkSideStyles, UThreadReposCheck,
+  CommonTypes;
 
-type TSortType = (stASC, stDESC);
+{
 type
   TRepositoryListRec = Record
     ReposUrl       : string; // Repository URL
@@ -35,8 +36,9 @@ type
     AddVerToFileName: Boolean;  // Прибавлять версию релиза к сохраняемому файлу
     TimelAvtoCheck : Byte;      // Время интервала для автоматической проверки релиза
   End;
-
-type TLoadConfigsType = (loadAllConfig, loadProjList); 
+  }
+type TSortType = (stASC, stDESC);
+type TLoadConfigsType = (loadAllConfig, loadReposList);
 
 type
   TFrmMain = class(TForm)
@@ -64,24 +66,20 @@ type
     Help: TMenuItem;
     MM_CheckMainUpdate: TMenuItem;
     MM_OpenGitHubRepos: TMenuItem;
+    StatusBar: TStatusBar;
+    MM_AvtoCheckMode: TMenuItem;
+    Button1: TButton;
     procedure MM_AddRepositoryClick(Sender: TObject);
-    function AddItems: Integer;
     procedure FormCreate(Sender: TObject);
-    procedure LoadConfigAndProjectList(LoadConfigType: TLoadConfigsType);
     procedure PopupMenuPopup(Sender: TObject);
     procedure PM_DeletRepositoryClick(Sender: TObject);
-    procedure RemoveRepositoryFromReposList(FullRepositoryName: String);
     procedure ReposListUpdateVisible;
     procedure AddLog(StrMsg: String);
     procedure LVReposColumnClick(Sender: TObject; Column: TListColumn);
-    function GetWayToSortet(ColumnIndex: UInt8): TSortType;
-    function GetRepositoryIndex(ReposytoryName: string): Integer;
     procedure TimerTrackerTimer(Sender: TObject);
-    procedure RepositoryTracking;
     procedure OneReleaseCheck(ReposIndex: Integer);
     procedure PM_OneRepositoryCheckClick(Sender: TObject);
     procedure BtnTestClick(Sender: TObject);
-    function ConvertGitHubDateToDateTime(GitDateTime: String): String;
     procedure MM_SettingsClick(Sender: TObject);
     procedure PM_OpenDirClick(Sender: TObject);
     procedure PM_OpenUrlClick(Sender: TObject);
@@ -89,8 +87,15 @@ type
     procedure PM_DownloadFilesClick(Sender: TObject);
     procedure MM_OpenGitHubReposClick(Sender: TObject);
     procedure MM_CheckMainUpdateClick(Sender: TObject);
+    procedure MM_AvtoCheckModeClick(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
   private
-    { Private declarations }
+     procedure RemoveRepositoryFromReposList(FullRepositoryName: String);
+     procedure RepositoryTracking;
+     procedure LoadConfigAndProjectList(LoadConfigType: TLoadConfigsType);
+     function AddItems: Integer;
+     function GetRepositoryIndex(ReposytoryName: string): Integer;
+     function GetWayToSortet(ColumnIndex: UInt8): TSortType;
   public
     { Public declarations }
   end;
@@ -110,6 +115,7 @@ var
   GMT               : ShortInt; // Часовой пояс
   GLNewReleasesLive : Byte;
 
+  ThrReposCheck: ThreadReposCheck;
 
 Const
   CAPTION_MB = 'GitHub Releases Tracker';
@@ -121,6 +127,8 @@ Const
   c_def_style         = 'Amethyst Kamri';
   c_def_releases_live = 72;
   // ALL_PROJECT_DIR = 'GitHubReleasesTracker';
+
+function ConvertGitHubDateToDateTime(GitDateTime: String): String;
 
 implementation
 
@@ -176,7 +184,7 @@ begin
   mmInfo.Lines.Add(DateTimeToStr(Date + Time)  + ' ' + StrMsg);
 end;
 
-function TFrmMain.ConvertGitHubDateToDateTime(GitDateTime: String): String;
+function ConvertGitHubDateToDateTime(GitDateTime: String): String;
 var
   fs: TFormatSettings;
 begin
@@ -285,12 +293,14 @@ begin
       GLReposDir    := INI.ReadString(Section, 'DefaultRepositoryDir','');
       GLStyleName   := INI.ReadString(Section, 'StyleName', c_def_style);
       GLNewReleasesLive := INI.ReadInteger(Section, 'NewReleasesLive', c_def_releases_live);
+      MM_AvtoCheckMode.Checked := INI.ReadBool(Section, 'AvtoCheckMode', false);
+      TimerTracker.Enabled     := MM_AvtoCheckMode.Checked;
     end;
 
-    // Загрузка списка проектов PROJECT_LIST
+    // Загрузка списка репозиториев PROJECT_LIST
 
     LVRepos.Clear;
-    Section := 'PROJECT_LIST';
+    Section := 'REPOSITORY_LIST';
     INI.ReadSubSections(Section, ST, false);
     arReposList := Nil;
     SetLength(arReposList, ST.Count);
@@ -333,20 +343,49 @@ var
 begin
   FrmAddRepository.FrmShowInit;
   if Not FrmAddRepository.Applay then Exit;
-  ReposListUpdateVisible;
-  {
+  // ReposListUpdateVisible;
   i := Length(arReposList)-1;
   x := AddItems;
   with LVRepos.Items[x] do
   begin
-    Caption                      := arReposList[i].FullProjectName;
+    Caption                      := arReposList[i].FullReposName;
     SubItems[lv_proj_version]    := arReposList[i].LastVersion;
     SubItems[lv_date_publish]    := arReposList[i].DatePublish;
     SubItems[lv_date_last_check] := DateTimeToStr(arReposList[i].LastChecked);
     SubItems[lv_Language]        := arReposList[i].Language;
-    SubItems[lv_project_url]     := arReposList[i].ProjectUrl;
+    SubItems[lv_project_url]     := arReposList[i].ReposUrl;
+    ImageIndex := 1;
   end;
-  }
+
+end;
+
+procedure TFrmMain.MM_AvtoCheckModeClick(Sender: TObject);
+var INI: TIniFile;
+begin
+  if MM_AvtoCheckMode.Checked then
+  begin
+    ShowMessage('Режим будет отключчен');
+    MM_AvtoCheckMode.Checked := false;
+    StatusBar.Panels[1].Text := 'Режим Авто проверки: остановлен';
+    TimerTracker.Enabled     := false;
+  end
+  else
+  begin
+    ShowMessage('Режим будет включчен');
+    MM_AvtoCheckMode.Checked := true;
+    StatusBar.Panels[1].Text := 'Режим Авто проверки: запущен';
+    TimerTracker.Enabled     := true;
+  end;
+
+  if Not DirectoryExists(ConfigDir) then ForceDirectories(ConfigDir);
+  INI := TIniFile.Create(FileConfig);
+  try
+    INI.WriteBool('SETTINGS', 'AvtoCheckMode', MM_AvtoCheckMode.Checked);
+  finally
+    INI.Free;
+  end;
+
+
 end;
 
 procedure TFrmMain.MM_OpenGitHubReposClick(Sender: TObject);
@@ -373,6 +412,7 @@ end;
 procedure TFrmMain.OneReleaseCheck(ReposIndex: Integer);
 var
   JSONArray     : TJSONArray;
+  // JSONValue     : TJSONValue;
   tag_name      : string;
   DownloadDir   : string;
   SavedFileName : string;
@@ -399,15 +439,19 @@ begin
     Exit;
   end;
 
+  // JSONValue := RESTResponse.JSONValue;
+
   if RESTResponse.JSONValue = Nil then
   begin
-    // message
+    MessageBox(Handle, PChar('Имя репозитория: ' + arReposList[ReposIndex].ReposName
+                + #13+ 'Не было обнаружено ни одного репозитория.'),
+               PChar(CAPTION_MB), MB_ICONWARNING);
     Exit;
   end;
 
   if RESTResponse.JSONValue.FindValue('tag_name') = nil then
   begin
-    // message
+    //
     exit;
   end;
 
@@ -424,7 +468,7 @@ begin
     // ****** проверка версии релиза; verifying release version ******
     if arReposList[ReposIndex].LastVersion = tag_name then
     begin
-      s_temp := 'Имя проекта: ' +arReposList[ReposIndex].ReposName + #13#10 +
+      s_temp := 'Имя репозитория: ' +arReposList[ReposIndex].ReposName + #13#10 +
                 'Новый релиз не обнаружен' + #13#10 +
                 'Проверка релиза завершена.' ;
       MessageBox(Handle, PChar(s_temp), PChar(CAPTION_MB), MB_ICONINFORMATION);
@@ -445,6 +489,10 @@ begin
     if MessageBox(Handle, PChar(s_temp),
                 PChar(CAPTION_MB),
                 MB_ICONINFORMATION or MB_YESNO) = ID_NO then Exit;
+
+    FrmDownloadFiles.ShowInit(RESTResponse.JSONValue, ReposIndex, Nil);
+
+    (*
 
     // Получаю массив загруженных файлов; Getting an array of downloaded files
     JSONArray := RESTResponse.JSONValue.FindValue('assets') as TJSONArray;
@@ -566,6 +614,7 @@ begin
       else
         mmInfo.Lines.Add('Ошибка файл: ' + SavedFileName + ' не обнаружен.');
     end;
+    *)
 
   finally
     STFilters.Free;
@@ -573,6 +622,7 @@ begin
     FrmAddRepository.SaveAddedNewRepository(ReposIndex);
     ReposListUpdateVisible;
   end;
+
 end;
 
 procedure TFrmMain.PM_DeletRepositoryClick(Sender: TObject);
@@ -732,14 +782,21 @@ var
   s: string;
   v: string;
 begin
-  //
+
+  ThrReposCheck := ThreadReposCheck.Create(0, true);
+
+end;
+
+procedure TFrmMain.Button1Click(Sender: TObject);
+begin
+  ThrReposCheck.Start;
+  //ThrReposCheck.Terminate;
 end;
 
 procedure TFrmMain.LVReposColumnClick(Sender: TObject; Column: TListColumn);
 var i: SmallInt;
 begin
   if LVRepos.Items.Count < 2 then exit;
-
   {
   if LastColumnSorted <> Column.Index then
     ArSortColumnsPos[Column.Index] := stASC;
@@ -759,8 +816,27 @@ begin
 end;
 
 procedure TFrmMain.TimerTrackerTimer(Sender: TObject);
+var
+   ReposItem: TRepositoryListRec;
+   s: string;
 begin
-  // .........
+
+  for ReposItem in arReposList do
+  begin
+    if Not MM_AvtoCheckMode.Checked then Exit;
+    if IncHour(ReposItem.LastChecked, ReposItem.TimelAvtoCheck) < Date + Time then
+    begin
+      s := DateTimeToStr(IncHour(ReposItem.LastChecked, ReposItem.TimelAvtoCheck));
+      mmInfo.Lines.Add(ReposItem.FullReposName + '  проверка ' +s)
+    end
+    else
+    begin
+      s := DateTimeToStr(IncHour(ReposItem.LastChecked, ReposItem.TimelAvtoCheck));
+      mmInfo.Lines.Add(ReposItem.FullReposName + '  нет проверки '+s);
+    end;
+  end;
+
+  // TimerTracker.Enabled := false;
 end;
 
 end.

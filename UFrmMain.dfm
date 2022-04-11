@@ -23,7 +23,7 @@ object FrmMain: TFrmMain
     Left = 8
     Top = 8
     Width = 1049
-    Height = 417
+    Height = 425
     Anchors = [akLeft, akTop, akRight, akBottom]
     Columns = <
       item
@@ -84,7 +84,7 @@ object FrmMain: TFrmMain
     Left = 8
     Top = 472
     Width = 1049
-    Height = 137
+    Height = 113
     Anchors = [akLeft, akRight, akBottom]
     ScrollBars = ssVertical
     TabOrder = 1
@@ -98,6 +98,32 @@ object FrmMain: TFrmMain
     Caption = 'T E S T'
     TabOrder = 2
     OnClick = BtnTestClick
+  end
+  object StatusBar: TStatusBar
+    Left = 0
+    Top = 594
+    Width = 1066
+    Height = 25
+    Panels = <
+      item
+        Text = #1050#1086#1083#1080#1095#1077#1089#1090#1074#1086' '#1088#1077#1087#1086#1079#1080#1090#1086#1088#1080#1077#1074': 0'
+        Width = 200
+      end
+      item
+        Bevel = pbRaised
+        Text = #1040#1074#1090#1086' '#1087#1088#1086#1074#1077#1088#1082#1072': '
+        Width = 100
+      end>
+  end
+  object Button1: TButton
+    Left = 136
+    Top = 440
+    Width = 121
+    Height = 25
+    Anchors = [akLeft, akBottom]
+    Caption = 'Button1'
+    TabOrder = 4
+    OnClick = Button1Click
   end
   object MainMenu: TMainMenu
     Left = 288
@@ -114,6 +140,11 @@ object FrmMain: TFrmMain
       object MM_Settings: TMenuItem
         Caption = #1053#1072#1089#1090#1088#1086#1081#1082#1080
         OnClick = MM_SettingsClick
+      end
+      object MM_AvtoCheckMode: TMenuItem
+        Caption = #1056#1077#1078#1080#1084' '#1040#1074#1090#1086#1087#1088#1086#1074#1077#1088#1082#1080
+        Checked = True
+        OnClick = MM_AvtoCheckModeClick
       end
     end
     object Help: TMenuItem
@@ -792,7 +823,8 @@ object FrmMain: TFrmMain
     end
   end
   object TimerTracker: TTimer
-    Interval = 60000
+    Enabled = False
+    Interval = 5000
     OnTimer = TimerTrackerTimer
     Left = 536
     Top = 168

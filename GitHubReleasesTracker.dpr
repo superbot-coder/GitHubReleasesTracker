@@ -7,7 +7,8 @@ uses
   UFrmSettings in 'UFrmSettings.pas' {FrmSettings},
   Vcl.Themes,
   Vcl.Styles,
-  UFrmDownloadFiles in 'UFrmDownloadFiles.pas' {FrmDownloadFiles};
+  UFrmDownloadFiles in 'UFrmDownloadFiles.pas' {FrmDownloadFiles},
+  UThreadReposCheck in 'UThreadReposCheck.pas';
 
 {$R *.res}
 
