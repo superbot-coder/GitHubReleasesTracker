@@ -7,7 +7,8 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Mask,
   Vcl.ComCtrls, System.ImageList, Vcl.ImgList, json, System.IOUtils,
   REST.Types, RESTContentTypeStr, StrUtils,
-  Vcl.ExtCtrls, System.IniFiles, Vcl.Buttons, Vcl.FileCtrl, Vcl.Samples.Spin;
+  Vcl.ExtCtrls, System.IniFiles, Vcl.Buttons, Vcl.FileCtrl, Vcl.Samples.Spin,
+  CommonTypes;
 
 type TFrmShowMode = (fsmAddNew, fsmEdit);
 
@@ -40,7 +41,7 @@ type
     procedure BtnApplyClick(Sender: TObject);
     procedure edRepositoryLinkChange(Sender: TObject);
     procedure FrmShowInit;
-    procedure SaveAddedNewRepository(Index: Integer);
+    //procedure SaveAddedNewRepository(Index: Integer);
     procedure SpdBtnOpenDirClick(Sender: TObject);
     procedure FormShowEdit(ReposIndex: integer);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -82,7 +83,7 @@ implementation
 
 {$R *.dfm}
 
-Uses UFrmMain;
+Uses UFrmMain, UFrmDownloadFiles;
 
 function TFrmAddRepository.CheckRepositoryExistes(URL: String): boolean;
 var i: SmallInt;
@@ -220,45 +221,6 @@ begin
     else Result := '';
 end;
 
-procedure TFrmAddRepository.SaveAddedNewRepository(Index: Integer);
-var
-  INI: TIniFile;
-  Section: string;
-begin
-
-  if Not DirectoryExists(ConfigDir) then ForceDirectories(ConfigDir);
-  Section := 'REPOSITORY_LIST\'+ StringReplace(arReposList[Index].FullReposName, '/', '_', [rfReplaceAll]);
-
-  INI := TIniFile.Create(FileConfig);
-  try
-    with INI do
-    begin
-      WriteString(Section, 'RepositoryUrl', arReposList[Index].ReposUrl);
-      WriteString(Section, 'RepositoryDir', arReposList[Index].ReposDir);
-      WriteString(Section, 'ApiRepositoryUrl', arReposList[Index].ApiReposUrl);
-      WriteString(Section, 'ApiReleasesUrl', arReposList[Index].ApiReleasesUrl);
-      WriteString(Section, 'RepositoryName', arReposList[Index].ReposName);
-      WriteString(Section, 'FullRepositoryName', arReposList[Index].FullReposName);
-      WriteString(Section, 'AvatarFile', arReposList[Index].AvatarFile);
-      WriteString(Section, 'AvatarUrl',arReposList[Index].AvatarUrl );
-      WriteString(Section, 'FilterInclude', arReposList[Index].FilterInclude);
-      WriteString(Section, 'FilterExclude', arReposList[Index].FilterExclude);
-      WriteString(Section, 'DatePublish', arReposList[Index].DatePublish);
-      WriteString(Section, 'Language', arReposList[Index].Language);
-      WriteString(Section, 'LastVersion', arReposList[Index].LastVersion);
-      WriteDateTime(Section, 'LastChecked', arReposList[Index].LastChecked);
-      WriteInteger(Section, 'RuleDownload', arReposList[Index].RuleDownload);
-      WriteInteger(Section, 'RuleNotis', arReposList[Index].RuleNotis);
-      WriteBool(Section, 'NeedSubDir', arReposList[Index].NeedSubDir);
-      WriteDateTime(Section, 'NewReleaseDT', arReposList[Index].NewReleaseDT);
-      WriteBool(Section, 'AddVerToFileName', arReposList[Index].AddVerToFileName);
-      WriteInteger(Section, 'TimeAvtoCheck', arReposList[Index].TimelAvtoCheck);
-    end;
-  finally
-    INI.Free;
-  end;
-end;
-
 procedure TFrmAddRepository.SpdBtnOpenDirClick(Sender: TObject);
 var
   SelDir: String;
@@ -273,7 +235,6 @@ var
   ext      : string;
   x        : SmallInt;
 begin
-
   if FFrmMode = fsmEdit then
   begin
     with arReposList[FReposIndex] do
@@ -287,7 +248,7 @@ begin
       AddVerToFileName := ChBoxAddVerToFileName.Checked;
       TimelAvtoCheck := SpEdTimeAutoCheck.Value;
     end;
-    SaveAddedNewRepository(FReposIndex);
+    SaveReposRecConfig(arReposList[FReposIndex]);
   end;
 
   if FFrmMode = fsmAddNew then
@@ -404,6 +365,7 @@ begin
         mm.Lines.Add('Проверка выполнена.');
         MessageBox(Handle, PChar(mm.Lines.Text),
                    PChar(CAPTION_MB), MB_ICONINFORMATION);
+        Exit;
       end;
 
       if RESTResponse.JSONValue.FindValue('tag_name') <> nil then
@@ -411,7 +373,7 @@ begin
         mm.Lines.Add('Имя релиза: ' + FRepositoryName);
         FLastReleaseVersion := RESTResponse.JSONValue.FindValue('tag_name').Value;
         FPublishRelease     := RESTResponse.JSONValue.FindValue('published_at').Value;
-        FPublishRelease     := ConvertGitHubDateToDateTime(FPublishRelease);
+        FPublishRelease     := XSDateTimeToDateTimeStr(FPublishRelease);
         mm.Lines.Add('Дата публикации последнего релиза: ' + FPublishRelease);
         mm.Lines.Add('Версия последнего релиза: ' + FLastReleaseVersion);
         mm.Lines.Add('Проверка выполнена.');
@@ -444,13 +406,15 @@ begin
       AddVerToFileName := ChBoxAddVerToFileName.Checked;
       TimelAvtoCheck   := SpEdTimeAutoCheck.Value;
     end;
+    SaveReposRecConfig(arReposList[Length(arReposList) - 1]);
 
-    SaveAddedNewRepository(Length(arReposList) - 1);
+    if ChBoxDownloadLastRelease.Checked And ChBoxDownloadLastRelease.Enabled then
+      FrmDownloadFiles.ShowInit(FrmMain.RESTResponse.JSONValue, arReposList[Length(arReposList) - 1]);
 
     Applay := true;
     BtnApply.Enabled := true;
-  end;
 
+  end;
   Close;
 end;
 

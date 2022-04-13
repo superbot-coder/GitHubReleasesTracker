@@ -12,31 +12,6 @@ uses
   System.DateUtils, Vcl.Mask, Winapi.ShellAPI, BrightDarkSideStyles, UThreadReposCheck,
   CommonTypes;
 
-{
-type
-  TRepositoryListRec = Record
-    ReposUrl       : string; // Repository URL
-    ReposDir       : string; // Repository Directory
-    ApiReposUrl    : string; // Api repository URL
-    ApiReleasesUrl : string; // Api Repository Releases URL
-    ReposName      : string; // Repository name
-    FullReposName  : string; //
-    AvatarFile     : string; //
-    AvatarUrl      : string; //
-    FilterInclude  : string; //
-    FilterExclude  : string; //
-    DatePublish    : string; // Дата публикации релиза на GitHub
-    Language       : string; // Язык программирования репозитория (бонус)
-    LastVersion    : string; // Последняя версия релиза
-    LastChecked    : TDateTime; // Дата и время последней проверки
-    RuleDownload   : UInt8;     // Параметры правила для скасивания
-    RuleNotis      : UInt8;     // Параметры правила для уведомления об новой версии
-    NeedSubDir     : Boolean;   // необходимость субдиректории для каждого редиза
-    NewReleaseDT   : TDateTime; // Дата и время скачивания нового релиза
-    AddVerToFileName: Boolean;  // Прибавлять версию релиза к сохраняемому файлу
-    TimelAvtoCheck : Byte;      // Время интервала для автоматической проверки релиза
-  End;
-  }
 type TSortType = (stASC, stDESC);
 type TLoadConfigsType = (loadAllConfig, loadReposList);
 
@@ -90,11 +65,11 @@ type
     procedure MM_AvtoCheckModeClick(Sender: TObject);
     procedure Button1Click(Sender: TObject);
   private
+     STLogList: TStrings;
      procedure RemoveRepositoryFromReposList(FullRepositoryName: String);
      procedure RepositoryTracking;
      procedure LoadConfigAndProjectList(LoadConfigType: TLoadConfigsType);
      function AddItems: Integer;
-     function GetRepositoryIndex(ReposytoryName: string): Integer;
      function GetWayToSortet(ColumnIndex: UInt8): TSortType;
   public
     { Public declarations }
@@ -111,7 +86,7 @@ var
   GLDefReposDir     : string;
   GLStyleName       : String;
   GLStyleIcon       : Byte;
-  arReposList       : array of TRepositoryListRec;
+  arReposList       : array of TRepositoryRec;
   GMT               : ShortInt; // Часовой пояс
   GLNewReleasesLive : Byte;
 
@@ -128,7 +103,7 @@ Const
   c_def_releases_live = 72;
   // ALL_PROJECT_DIR = 'GitHubReleasesTracker';
 
-function ConvertGitHubDateToDateTime(GitDateTime: String): String;
+// function ConvertGitHubDateToDateTime(GitDateTime: String): String;
 
 implementation
 
@@ -184,6 +159,7 @@ begin
   mmInfo.Lines.Add(DateTimeToStr(Date + Time)  + ' ' + StrMsg);
 end;
 
+{
 function ConvertGitHubDateToDateTime(GitDateTime: String): String;
 var
   fs: TFormatSettings;
@@ -195,6 +171,7 @@ begin
   // Гдобальное нелокализованое время; global non-localized time
   Result := DateTimeToStr(StrToDateTime(GitDateTime, fs));
 end;
+}
 
 procedure TFrmMain.FormCreate(Sender: TObject);
 var
@@ -210,6 +187,7 @@ begin
   ConfigDir  := GetEnvironmentVariable('APPDATA') + '\GitHubReleasesTracker';
   FileConfig := ConfigDir + '\Config.ini';
   GLDefReposDir := GetEnvironmentVariable('USERPROFILE') + '\Downloads\GitHubReleasesTracker';
+  STLogList  := TStringList.Create;
 
   LoadConfigAndProjectList(loadAllConfig);
 
@@ -218,22 +196,10 @@ begin
   TStyleManager.SetStyle(GLStyleName);
 
   if GLReposDir = '' then GLReposDir := GLDefReposDir;
-
   ReposListUpdateVisible;
+
   for b := 0 to Length(ArSortColumnsPos) -1 do ArSortColumnsPos[b] := stASC;
 
-end;
-
-function TFrmMain.GetRepositoryIndex(ReposytoryName: string): Integer;
-var i: Integer;
-begin
-  Result := -1;
-  for i := 0 to length(arReposList) -1 do
-    if arReposList[i].FullReposName = ReposytoryName then
-    begin
-      Result := i;
-      Break;
-    end;
 end;
 
 function TFrmMain.GetWayToSortet(ColumnIndex: UInt8): TSortType;
@@ -297,7 +263,7 @@ begin
       TimerTracker.Enabled     := MM_AvtoCheckMode.Checked;
     end;
 
-    // Загрузка списка репозиториев PROJECT_LIST
+    // Загрузка списка репозиториев REPOSITORY_LIST
 
     LVRepos.Clear;
     Section := 'REPOSITORY_LIST';
@@ -356,7 +322,6 @@ begin
     SubItems[lv_project_url]     := arReposList[i].ReposUrl;
     ImageIndex := 1;
   end;
-
 end;
 
 procedure TFrmMain.MM_AvtoCheckModeClick(Sender: TObject);
@@ -384,8 +349,6 @@ begin
   finally
     INI.Free;
   end;
-
-
 end;
 
 procedure TFrmMain.MM_OpenGitHubReposClick(Sender: TObject);
@@ -402,28 +365,18 @@ end;
 
 procedure TFrmMain.MM_CheckMainUpdateClick(Sender: TObject);
 begin
-  TimerTracker.Enabled := false;
+  //TimerTracker.Enabled := false;
+  FrmDownloadFiles.ShowInit(Sender);
 
-  FrmDownloadFiles.ShowInit(Nil, 0, Sender);
-
-  TimerTracker.Enabled := true;
+  //TimerTracker.Enabled := true;
 end;
 
 procedure TFrmMain.OneReleaseCheck(ReposIndex: Integer);
 var
   JSONArray     : TJSONArray;
-  // JSONValue     : TJSONValue;
   tag_name      : string;
-  DownloadDir   : string;
-  SavedFileName : string;
-  ext           : string;
   s_temp        : string;
-  STFilters     : TStrings;
-  STFilesURL    : TStrings;
-  Checked       : Boolean;
-  i, j          : UInt8;
-  cnt           : UInt8;
-  DatePublish   : TDateTime;
+  vDatePublish  : TDateTime;
 begin
 
   if ReposIndex = -1 then Exit;
@@ -457,14 +410,11 @@ begin
 
   tag_name    := RESTResponse.JSONValue.FindValue('tag_name').Value;
   s_temp      := RESTResponse.JSONValue.FindValue('published_at').Value;
-  s_temp      := ConvertGitHubDateToDateTime(s_temp);
-  DatePublish := StrToDateTime(s_temp);
+  s_temp      := XSDateTimeToDateTimeStr(s_temp); //ConvertGitHubDateToDateTime(s_temp);
+  vDatePublish := StrToDateTime(s_temp);
   arReposList[ReposIndex].LastChecked := Date + Time;
 
-  STFilters  := TStringList.Create;
-  STFilesURL := TStringList.Create;
   try
-
     // ****** проверка версии релиза; verifying release version ******
     if arReposList[ReposIndex].LastVersion = tag_name then
     begin
@@ -490,136 +440,10 @@ begin
                 PChar(CAPTION_MB),
                 MB_ICONINFORMATION or MB_YESNO) = ID_NO then Exit;
 
-    FrmDownloadFiles.ShowInit(RESTResponse.JSONValue, ReposIndex, Nil);
-
-    (*
-
-    // Получаю массив загруженных файлов; Getting an array of downloaded files
-    JSONArray := RESTResponse.JSONValue.FindValue('assets') as TJSONArray;
-    if JSONArray.Count = 0 then
-    begin
-      // message
-      Exit;
-    end;
-
-    // создание списка файлов для закачки; creating files list for downloasd
-    for i := 0 to JSONArray.Count -1 do
-      STFilesURL.Add(JSONArray.Items[i].FindValue('browser_download_url').Value);
-
-    // Условное скачивание, использование фильтра
-    // Conditional download, using a filter
-    if arReposList[ReposIndex].RuleDownload = 1 then
-    begin
-
-      // Использую фильтр "Включить"; Use the filter "Include"
-      s_temp := StringReplace(arReposList[ReposIndex].FilterInclude, ' ', '', [rfReplaceAll]);
-      STFilters.Text := StringReplace(s_temp, ',', #13, [rfReplaceAll]);
-      //ShowMessage(STFilters.Text);
-
-      cnt := 0;
-      while STFilesURL.Count <> cnt do
-      begin
-        SavedFileName := AnsiLowerCase(STFilesURL.Strings[cnt]);
-        Delete(SavedFileName, 1, LastDelimiter('/',SavedFileName));
-
-        Checked := false;
-        for j := 0 to STFilters.Count -1 do
-          if AnsiPos(STFilters.Strings[j], SavedFileName) <> 0 then
-          begin
-            Checked := true;
-            Break;
-          end;
-
-        if Checked = false then
-        begin
-          STFilesURL.Delete(cnt);
-          Continue;
-        end;
-        Inc(cnt);
-      end;
-
-      // Использую фильтр "Исключить"; Use the filter "Exclude"
-      s_temp := StringReplace(arReposList[ReposIndex].FilterExclude, ' ', '', [rfReplaceAll]);
-      STFilters.Text := StringReplace(s_temp, ',', #13, [rfReplaceAll]);
-
-      cnt := 0;
-      while STFilesURL.Count <> cnt do
-      begin
-        SavedFileName := AnsiLowerCase(STFilesURL.Strings[cnt]);
-        Delete(SavedFileName, 1, LastDelimiter('/',SavedFileName));
-
-        Checked := false;
-        for j := 0 to STFilters.Count -1 do
-          if AnsiPos(STFilters.Strings[j], SavedFileName) <> 0 then
-          begin
-            Checked := true;
-            Break;
-          end;
-
-        if Checked = true then
-        begin
-          STFilesURL.Delete(cnt);
-          Continue;
-        end;
-        Inc(cnt);
-      end;
-
-    end;
-
-    // ****** Скачивание файлов из списка; Download files from the list ******
-
-    // подготовка директорнии для скачивания; preparing a directory for download
-    if arReposList[ReposIndex].NeedSubDir then
-      DownloadDir := arReposList[ReposIndex].ReposDir + '\' + tag_name
-    else
-      DownloadDir := arReposList[ReposIndex].ReposDir;
-    if Not DirectoryExists(DownloadDir) then ForceDirectories(DownloadDir);
-
-    //mmInfo.Lines.Add(STFilesURL.text);
-
-    for i:=0 to STFilesURL.Count -1 do
-    begin
-
-      RESTResponse.RootElement := '';
-      RESTClient.Accept        := 'application'; //'application/zip';
-      RESTClient.BaseURL       := STFilesURL.Strings[i];
-      RESTRequest.Execute;
-
-      if RESTResponse.StatusCode <> 200 then
-      begin
-        // message ...
-        Continue;
-      end;
-
-      SavedFileName := STFilesURL.Strings[i];
-      Delete(SavedFileName, 1, LastDelimiter('/', SavedFileName));
-
-      if arReposList[ReposIndex].AddVerToFileName then
-        Insert('_' + tag_name, SavedFileName, LastDelimiter('.', SavedFileName) -1);
-
-      SavedFileName := DownloadDir + '\' + SavedFileName;
-
-      {
-      if arReposList[ProjectIndex].NeedSubDir then
-        SavedFileName := DownloadDir + '\' + tag_name + '\' + SavedFileName
-      else
-      begin
-        SavedFileName := DownloadDir + '\' + SavedFileName;
-      end;}
-
-      TFile.WriteAllBytes(SavedFileName, RESTResponse.RawBytes);
-
-      if FileExists(SavedFileName) then
-        mmInfo.Lines.Add('Файл: ' + SavedFileName + ' был скачан удачно.')
-      else
-        mmInfo.Lines.Add('Ошибка файл: ' + SavedFileName + ' не обнаружен.');
-    end;
-    *)
+    FrmDownloadFiles.ShowInit(RESTResponse.JSONValue, arReposList[ReposIndex]);
 
   finally
-    STFilters.Free;
-    STFilesURL.Free;
-    FrmAddRepository.SaveAddedNewRepository(ReposIndex);
+    SaveReposRecDeltaConfig(arReposList[ReposIndex]);
     ReposListUpdateVisible;
   end;
 
@@ -627,19 +451,18 @@ end;
 
 procedure TFrmMain.PM_DeletRepositoryClick(Sender: TObject);
 Var
-  DelProjName: string;
+  DelReposName: string;
   INI: TIniFile;
 begin
   if MessageBox(Handle, PChar('Вы собераетесь удалить репозиторий из списка'
                 + #13#10 + ' Продолжить?'),
                 PChar(CAPTION_MB), MB_ICONWARNING or MB_YESNO) = ID_NO then Exit;
-
-  DelProjName := LVRepos.Selected.Caption;
+  DelReposName := LVRepos.Selected.Caption;
   RemoveRepositoryFromReposList(LVRepos.Selected.Caption);
   ReposListUpdateVisible;
   INI := TIniFile.Create(FileConfig);
   try
-    INI.EraseSection('PROJECT_LIST\' + DelProjName);
+    INI.EraseSection('REPOSITORY_LIST\' + StringReplace(DelReposName, '/', '_', []));
   finally
     INI.Free;
   end;
@@ -647,12 +470,12 @@ end;
 
 procedure TFrmMain.PM_DownloadFilesClick(Sender: TObject);
 begin
-  FrmDownloadFiles.ShowInit(Nil, GetRepositoryIndex(LVRepos.Selected.Caption), nil);
+  FrmDownloadFiles.ShowInit(Nil, arReposList[GetReposIndex(LVRepos.Selected.Caption)]);
 end;
 
 procedure TFrmMain.PM_OneRepositoryCheckClick(Sender: TObject);
 begin
-  OneReleaseCheck(GetRepositoryIndex(LVRepos.Selected.Caption));
+  OneReleaseCheck(GetReposIndex(LVRepos.Selected.Caption));
 end;
 
 procedure TFrmMain.PM_OpenDirClick(Sender: TObject);
@@ -660,7 +483,7 @@ var
   i: Word;
   ProjDir: string;
 begin
-  i := GetRepositoryIndex(LVRepos.Selected.Caption);
+  i := GetReposIndex(LVRepos.Selected.Caption);
   ProjDir := arReposList[i].ReposDir;
   if arReposList[i].NeedSubDir then
     if DirectoryExists(ProjDir + '\' +arReposList[i].LastVersion) then
@@ -671,7 +494,7 @@ end;
 procedure TFrmMain.PM_OpenUrlClick(Sender: TObject);
 begin
   ShellExecute(Handle, PChar('Open'),
-               PChar(arReposList[GetRepositoryIndex(LVRepos.Selected.Caption)].ReposUrl),
+               PChar(arReposList[GetReposIndex(LVRepos.Selected.Caption)].ReposUrl),
                Nil, Nil, SW_SHOWNORMAL);
 end;
 
@@ -699,7 +522,7 @@ end;
 
 procedure TFrmMain.PM_EditSettingsClick(Sender: TObject);
 begin
-  FrmAddRepository.FormShowEdit(GetRepositoryIndex(LVRepos.Selected.Caption));
+  FrmAddRepository.FormShowEdit(GetReposIndex(LVRepos.Selected.Caption));
 end;
 
 procedure TFrmMain.ReposListUpdateVisible;
@@ -781,9 +604,13 @@ procedure TFrmMain.BtnTestClick(Sender: TObject);
 var
   s: string;
   v: string;
+  i: integer;
 begin
 
-  ThrReposCheck := ThreadReposCheck.Create(0, true);
+  mmInfo.Lines.Add(IntToStr(GetReposIndex('superbot-coder/chia_plotting_tools')));
+  //ThrReposCheck := ThreadReposCheck.Create(0, true);
+
+  FrmDownloadFiles.ShowInit(Nil, arReposList[15]);
 
 end;
 
@@ -817,7 +644,7 @@ end;
 
 procedure TFrmMain.TimerTrackerTimer(Sender: TObject);
 var
-   ReposItem: TRepositoryListRec;
+   ReposItem: TRepositoryRec;
    s: string;
 begin
 

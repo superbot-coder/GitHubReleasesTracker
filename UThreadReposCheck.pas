@@ -13,7 +13,7 @@ type
     RESTClient   : TRESTClient;
     RESTRequest  : TRESTRequest;
     RESTResponse : TRESTResponse;
-    FReposRec    : TRepositoryListRec;
+    FReposRec    : TRepositoryRec;
     STFilters    : TStrings;
     STFilesURL   : TStrings;
     STFileName   : TStrings;
@@ -89,8 +89,7 @@ begin
 
   Ftag_name    := RESTResponse.JSONValue.FindValue('tag_name').Value;
   s_temp       := RESTResponse.JSONValue.FindValue('published_at').Value;
-  s_temp       := ConvertGitHubDateToDateTime(s_temp);
-  FDatePublish := s_temp;
+  FDatePublish := XSDateTimeToDateTimeStr(s_temp);
   FLastChecked := Date + Time;
 
   // ****** проверка версии релиза; verifying release version ******
@@ -159,7 +158,7 @@ begin
     SavedFileName := STFileName.Strings[i];
 
     if FReposRec.AddVerToFileName then
-      Insert('_' + Ftag_name, SavedFileName, LastDelimiter('.', SavedFileName) -1);
+      Insert('_' + Ftag_name, SavedFileName, LastDelimiter('.', SavedFileName));
 
     SavedFileName := DownloadDir + '\' + SavedFileName;
 
@@ -190,14 +189,14 @@ var
   Checked: Boolean;
 begin
   // Использую фильтр "Включить"; Use the filter "Include"
-  s_temp := StringReplace(FReposRec.FilterInclude, ' ', '', [rfReplaceAll]);
+  s_temp := AnsiLowerCase(StringReplace(FReposRec.FilterInclude, ' ', '', [rfReplaceAll]));
   STFilters.Text := StringReplace(s_temp, ',', #13, [rfReplaceAll]);
   cnt := 0;
   while STFileName.Count <> cnt do
   begin
     Checked := false;
     for i := 0 to STFilters.Count -1 do
-      if AnsiPos(STFilters.Strings[i], STFileName.Strings[cnt]) <> 0 then
+      if AnsiPos(AnsiLowerCase(STFilters.Strings[i]), STFileName.Strings[cnt]) <> 0 then
       begin
         Checked := true;
         Break;
@@ -212,14 +211,14 @@ begin
   end;
 
   // Использую фильтр "Исключить"; Use the filter "Exclude"
-  s_temp := StringReplace(FReposRec.FilterExclude, ' ', '', [rfReplaceAll]);
+  s_temp := AnsiUpperCase(StringReplace(FReposRec.FilterExclude, ' ', '', [rfReplaceAll]));
   STFilters.Text := StringReplace(s_temp, ',', #13, [rfReplaceAll]);
   cnt := 0;
   while STFileName.Count <> cnt do
   begin
     Checked := false;
     for i := 0 to STFilters.Count -1 do
-      if AnsiPos(STFilters.Strings[i], STFileName.Strings[cnt]) <> 0 then
+      if AnsiPos(AnsiLowerCase(STFilters.Strings[i]), STFileName.Strings[cnt]) <> 0 then
       begin
         Checked := true;
         Break;
@@ -249,7 +248,7 @@ begin
     NewReleaseDT := FDtNewRelease;
     LastChecked  := Date + Time;
   end;
-  //FrmAddRepository.SaveAddedNewRepository(ReposIndex);
+  SaveReposRecDeltaConfig(arReposList[FReposIndex]);
 end;
 
 procedure ThreadReposCheck.SendMsg(MsgStr: String);

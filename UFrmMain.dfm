@@ -2,7 +2,7 @@ object FrmMain: TFrmMain
   Left = 0
   Top = 0
   Caption = 'FrmMain'
-  ClientHeight = 619
+  ClientHeight = 722
   ClientWidth = 1066
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -16,14 +16,14 @@ object FrmMain: TFrmMain
   OnCreate = FormCreate
   DesignSize = (
     1066
-    619)
+    722)
   PixelsPerInch = 96
   TextHeight = 13
   object LVRepos: TListView
     Left = 8
     Top = 8
     Width = 1049
-    Height = 425
+    Height = 528
     Anchors = [akLeft, akTop, akRight, akBottom]
     Columns = <
       item
@@ -79,29 +79,32 @@ object FrmMain: TFrmMain
     TabOrder = 0
     ViewStyle = vsReport
     OnColumnClick = LVReposColumnClick
+    ExplicitHeight = 425
   end
   object mmInfo: TMemo
     Left = 8
-    Top = 472
+    Top = 575
     Width = 1049
     Height = 113
     Anchors = [akLeft, akRight, akBottom]
     ScrollBars = ssVertical
     TabOrder = 1
+    ExplicitTop = 472
   end
   object BtnTest: TButton
     Left = 8
-    Top = 440
+    Top = 543
     Width = 121
     Height = 25
     Anchors = [akLeft, akBottom]
     Caption = 'T E S T'
     TabOrder = 2
     OnClick = BtnTestClick
+    ExplicitTop = 440
   end
   object StatusBar: TStatusBar
     Left = 0
-    Top = 594
+    Top = 697
     Width = 1066
     Height = 25
     Panels = <
@@ -114,16 +117,18 @@ object FrmMain: TFrmMain
         Text = #1040#1074#1090#1086' '#1087#1088#1086#1074#1077#1088#1082#1072': '
         Width = 100
       end>
+    ExplicitTop = 594
   end
   object Button1: TButton
     Left = 136
-    Top = 440
+    Top = 543
     Width = 121
     Height = 25
     Anchors = [akLeft, akBottom]
     Caption = 'Button1'
     TabOrder = 4
     OnClick = Button1Click
+    ExplicitTop = 440
   end
   object MainMenu: TMainMenu
     Left = 288

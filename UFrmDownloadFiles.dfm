@@ -80,7 +80,7 @@ object FrmDownloadFiles: TFrmDownloadFiles
       TabOrder = 1
     end
     object BtnApplyFilter: TButton
-      Left = 320
+      Left = 192
       Top = 66
       Width = 137
       Height = 25
@@ -89,13 +89,22 @@ object FrmDownloadFiles: TFrmDownloadFiles
       OnClick = BtnApplyFilterClick
     end
     object BtnSaveFilter: TButton
-      Left = 464
+      Left = 448
       Top = 66
-      Width = 75
+      Width = 89
       Height = 25
       Caption = #1057#1086#1093#1088#1072#1085#1080#1090#1100' '
       TabOrder = 3
       OnClick = BtnSaveFilterClick
+    end
+    object BtnFilterRerestore: TButton
+      Left = 344
+      Top = 66
+      Width = 91
+      Height = 25
+      Caption = #1042#1086#1089#1089#1090#1072#1085#1086#1074#1080#1090#1100
+      TabOrder = 4
+      OnClick = BtnFilterRerestoreClick
     end
   end
   object PnlInfo: TPanel
