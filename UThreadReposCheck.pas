@@ -74,6 +74,13 @@ var
   SavedFileName: string;
 begin
 
+  While Not Terminated do
+  begin
+    Sleep(2000);
+    SendMsg('ThreadReposCheck.Execute');
+  end;
+
+exit;
   RESTRequest.Execute;
 
   if RESTResponse.StatusCode <> 200 then
@@ -171,14 +178,6 @@ begin
   end;
 
   Synchronize(SaveReposRec);
-
-  /////////////////////////////////////////////////////////////////////////////
-
-  While true do
-  begin
-    Sleep(2000);
-    SendMsg('ThreadReposCheck.Execute');
-  end;
 
 end;
 

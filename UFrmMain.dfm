@@ -79,7 +79,6 @@ object FrmMain: TFrmMain
     TabOrder = 0
     ViewStyle = vsReport
     OnColumnClick = LVReposColumnClick
-    ExplicitHeight = 425
   end
   object mmInfo: TMemo
     Left = 8
@@ -89,7 +88,6 @@ object FrmMain: TFrmMain
     Anchors = [akLeft, akRight, akBottom]
     ScrollBars = ssVertical
     TabOrder = 1
-    ExplicitTop = 472
   end
   object BtnTest: TButton
     Left = 8
@@ -100,7 +98,6 @@ object FrmMain: TFrmMain
     Caption = 'T E S T'
     TabOrder = 2
     OnClick = BtnTestClick
-    ExplicitTop = 440
   end
   object StatusBar: TStatusBar
     Left = 0
@@ -117,7 +114,6 @@ object FrmMain: TFrmMain
         Text = #1040#1074#1090#1086' '#1087#1088#1086#1074#1077#1088#1082#1072': '
         Width = 100
       end>
-    ExplicitTop = 594
   end
   object Button1: TButton
     Left = 136
@@ -128,7 +124,6 @@ object FrmMain: TFrmMain
     Caption = 'Button1'
     TabOrder = 4
     OnClick = Button1Click
-    ExplicitTop = 440
   end
   object MainMenu: TMainMenu
     Left = 288
@@ -829,7 +824,6 @@ object FrmMain: TFrmMain
   end
   object TimerTracker: TTimer
     Enabled = False
-    Interval = 5000
     OnTimer = TimerTrackerTimer
     Left = 536
     Top = 168

@@ -169,6 +169,8 @@ begin
     finally
       INI.Free;
     end;
+    MessageBox(Handle, PChar('Успешно сохранено.'),
+               PChar(CAPTION_MB), MB_ICONINFORMATION);
   end;
 end;
 
@@ -280,7 +282,7 @@ begin
                    PChar(CAPTION_MB), MB_ICONINFORMATION);
       Exit;
     end;
-    JSONData :=
+
     Ftag_name := RESTResponse.JSONValue.FindValue('tag_name').Value;
 
     (*

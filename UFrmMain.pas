@@ -64,6 +64,7 @@ type
     procedure MM_CheckMainUpdateClick(Sender: TObject);
     procedure MM_AvtoCheckModeClick(Sender: TObject);
     procedure Button1Click(Sender: TObject);
+    procedure TestChecking;
   private
      STLogList: TStrings;
      procedure RemoveRepositoryFromReposList(FullRepositoryName: String);
@@ -89,6 +90,7 @@ var
   arReposList       : array of TRepositoryRec;
   GMT               : ShortInt; // Часовой пояс
   GLNewReleasesLive : Byte;
+  GLThreadWaitMax   : Cardinal;
 
   ThrReposCheck: ThreadReposCheck;
 
@@ -188,6 +190,7 @@ begin
   FileConfig := ConfigDir + '\Config.ini';
   GLDefReposDir := GetEnvironmentVariable('USERPROFILE') + '\Downloads\GitHubReleasesTracker';
   STLogList  := TStringList.Create;
+  GLThreadWaitMax := 1000 * 60 ; // 5 мин.
 
   LoadConfigAndProjectList(loadAllConfig);
 
@@ -329,14 +332,14 @@ var INI: TIniFile;
 begin
   if MM_AvtoCheckMode.Checked then
   begin
-    ShowMessage('Режим будет отключчен');
+    ShowMessage('Режим автопроверки будет отключен');
     MM_AvtoCheckMode.Checked := false;
     StatusBar.Panels[1].Text := 'Режим Авто проверки: остановлен';
     TimerTracker.Enabled     := false;
   end
   else
   begin
-    ShowMessage('Режим будет включчен');
+    ShowMessage('Режим автопроверки будет включен');
     MM_AvtoCheckMode.Checked := true;
     StatusBar.Panels[1].Text := 'Режим Авто проверки: запущен';
     TimerTracker.Enabled     := true;
@@ -605,19 +608,37 @@ var
   s: string;
   v: string;
   i: integer;
+  TimeBgn: Cardinal;
+  WaitTime: Cardinal;
 begin
 
-  mmInfo.Lines.Add(IntToStr(GetReposIndex('superbot-coder/chia_plotting_tools')));
-  //ThrReposCheck := ThreadReposCheck.Create(0, true);
+  //mmInfo.Lines.Add(IntToStr(GetReposIndex('superbot-coder/chia_plotting_tools')));
 
-  FrmDownloadFiles.ShowInit(Nil, arReposList[15]);
+  ThrReposCheck := ThreadReposCheck.Create(0, False);
+  mmInfo.Lines.Add('WaitForSingleObject  = begin');
+  TimeBgn := GetTickCount;
+  while WaitForSingleObject(ThrReposCheck.Handle,  100) = WAIT_TIMEOUT do
+  begin
+    WaitTime := (GetTickCount - TimeBgn);
+    mmInfo.Lines.Add('WaitTime = ' + IntToStr(WaitTime));
+    if GLThreadWaitMax < WaitTime then
+    begin
+      // message...
+      mmInfo.Lines.Add('Превышен интервал ожидания потока');
+      ThrReposCheck.Terminate;
+    end;
+    Application.ProcessMessages;
+    mmInfo.Lines.Add('WaitForSingleObject = live');
+  end;
+
+  mmInfo.Lines.Add('WaitForSingleObject  =  end');
 
 end;
 
 procedure TFrmMain.Button1Click(Sender: TObject);
 begin
-  ThrReposCheck.Start;
-  //ThrReposCheck.Terminate;
+  //ThrReposCheck.Start;
+  ThrReposCheck.Terminate;
 end;
 
 procedure TFrmMain.LVReposColumnClick(Sender: TObject; Column: TListColumn);
@@ -642,24 +663,53 @@ begin
     ArSortColumnsPos[Column.Index] := stASC;
 end;
 
+procedure TFrmMain.TestChecking;
+var cnt: Word;
+begin
+  TimerTracker.Enabled := False;
+  cnt := 0;
+  while cnt < 20 do
+  begin
+    sleep(500);
+    mmInfo.Lines.Add(intToStr(cnt) + 'sleep....');
+    Application.ProcessMessages;
+    inc(cnt);
+  end;
+end;
+
 procedure TFrmMain.TimerTrackerTimer(Sender: TObject);
 var
    ReposItem: TRepositoryRec;
    s: string;
+   i: SmallInt;
 begin
-
-  for ReposItem in arReposList do
+  TimerTracker.Enabled := false;
+  for i := 0 to Length(arReposList) -1 do
   begin
     if Not MM_AvtoCheckMode.Checked then Exit;
-    if IncHour(ReposItem.LastChecked, ReposItem.TimelAvtoCheck) < Date + Time then
+    if IncHour(arReposList[i].LastChecked, arReposList[i].TimelAvtoCheck) < Date + Time then
     begin
       s := DateTimeToStr(IncHour(ReposItem.LastChecked, ReposItem.TimelAvtoCheck));
-      mmInfo.Lines.Add(ReposItem.FullReposName + '  проверка ' +s)
+      mmInfo.Lines.Add(ReposItem.FullReposName + '  проверка ' + s);
+
+      ThrReposCheck := ThreadReposCheck.Create(i, true);
+      ThrReposCheck.Start;
+
+      mmInfo.Lines.Add('WaitForSingleObject  = begin');
+      while WaitForSingleObject(ThrReposCheck.Handle,  0) = WAIT_TIMEOUT do
+      begin
+        Application.ProcessMessages;
+        mmInfo.Lines.Add('WaitForSingleObject = live');
+        sleep(100);
+      end;
+
+      mmInfo.Lines.Add('WaitForSingleObject  =  end');
+
     end
     else
     begin
       s := DateTimeToStr(IncHour(ReposItem.LastChecked, ReposItem.TimelAvtoCheck));
-      mmInfo.Lines.Add(ReposItem.FullReposName + '  нет проверки '+s);
+      mmInfo.Lines.Add(ReposItem.FullReposName + '  нет проверки ' + s);
     end;
   end;
 
