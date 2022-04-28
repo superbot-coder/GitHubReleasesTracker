@@ -13,6 +13,7 @@ object FrmMain: TFrmMain
   Menu = MainMenu
   OldCreateOrder = False
   Position = poScreenCenter
+  OnClose = FormClose
   OnCreate = FormCreate
   DesignSize = (
     1066
@@ -115,16 +116,6 @@ object FrmMain: TFrmMain
         Width = 100
       end>
   end
-  object Button1: TButton
-    Left = 136
-    Top = 543
-    Width = 121
-    Height = 25
-    Anchors = [akLeft, akBottom]
-    Caption = 'Button1'
-    TabOrder = 4
-    OnClick = Button1Click
-  end
   object MainMenu: TMainMenu
     Left = 288
     Top = 168
@@ -143,7 +134,6 @@ object FrmMain: TFrmMain
       end
       object MM_AvtoCheckMode: TMenuItem
         Caption = #1056#1077#1078#1080#1084' '#1040#1074#1090#1086#1087#1088#1086#1074#1077#1088#1082#1080
-        Checked = True
         OnClick = MM_AvtoCheckModeClick
       end
     end
@@ -824,6 +814,7 @@ object FrmMain: TFrmMain
   end
   object TimerTracker: TTimer
     Enabled = False
+    Interval = 60000
     OnTimer = TimerTrackerTimer
     Left = 536
     Top = 168

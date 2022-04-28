@@ -43,7 +43,6 @@ type
     MM_OpenGitHubRepos: TMenuItem;
     StatusBar: TStatusBar;
     MM_AvtoCheckMode: TMenuItem;
-    Button1: TButton;
     procedure MM_AddRepositoryClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure PopupMenuPopup(Sender: TObject);
@@ -63,8 +62,8 @@ type
     procedure MM_OpenGitHubReposClick(Sender: TObject);
     procedure MM_CheckMainUpdateClick(Sender: TObject);
     procedure MM_AvtoCheckModeClick(Sender: TObject);
-    procedure Button1Click(Sender: TObject);
     procedure TestChecking;
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
   private
      STLogList: TStrings;
      procedure RemoveRepositoryFromReposList(FullRepositoryName: String);
@@ -161,19 +160,10 @@ begin
   mmInfo.Lines.Add(DateTimeToStr(Date + Time)  + ' ' + StrMsg);
 end;
 
-{
-function ConvertGitHubDateToDateTime(GitDateTime: String): String;
-var
-  fs: TFormatSettings;
+procedure TFrmMain.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  fs.ShortDateFormat := 'YYYY-MM-DD';
-  fs.ShortTimeFormat := 'HH:MM:SS';
-  fs.DateSeparator   := '-';
-  fs.TimeSeparator   := ':';
-  // Гдобальное нелокализованое время; global non-localized time
-  Result := DateTimeToStr(StrToDateTime(GitDateTime, fs));
+  if Assigned(ThrReposCheck) then ThrReposCheck.Terminate;
 end;
-}
 
 procedure TFrmMain.FormCreate(Sender: TObject);
 var
@@ -190,7 +180,7 @@ begin
   FileConfig := ConfigDir + '\Config.ini';
   GLDefReposDir := GetEnvironmentVariable('USERPROFILE') + '\Downloads\GitHubReleasesTracker';
   STLogList  := TStringList.Create;
-  GLThreadWaitMax := 1000 * 60 ; // 5 мин.
+  GLThreadWaitMax := 5; // 5 мин.
 
   LoadConfigAndProjectList(loadAllConfig);
 
@@ -206,8 +196,8 @@ begin
 end;
 
 function TFrmMain.GetWayToSortet(ColumnIndex: UInt8): TSortType;
-// Функция определяет направление сортировки
-// The function determines the direction of sorting
+(* Функция определяет направление сортировки
+   The function determines the direction of sorting *)
 var
   r, x: Integer;
 begin
@@ -336,6 +326,7 @@ begin
     MM_AvtoCheckMode.Checked := false;
     StatusBar.Panels[1].Text := 'Режим Авто проверки: остановлен';
     TimerTracker.Enabled     := false;
+    if Assigned(ThrReposCheck) then ThrReposCheck.Terminate;
   end
   else
   begin
@@ -612,33 +603,25 @@ var
   WaitTime: Cardinal;
 begin
 
-  //mmInfo.Lines.Add(IntToStr(GetReposIndex('superbot-coder/chia_plotting_tools')));
+  ThrReposCheck := ThreadReposCheck.Create(0, false);
 
-  ThrReposCheck := ThreadReposCheck.Create(0, False);
   mmInfo.Lines.Add('WaitForSingleObject  = begin');
   TimeBgn := GetTickCount;
   while WaitForSingleObject(ThrReposCheck.Handle,  100) = WAIT_TIMEOUT do
   begin
-    WaitTime := (GetTickCount - TimeBgn);
-    mmInfo.Lines.Add('WaitTime = ' + IntToStr(WaitTime));
-    if GLThreadWaitMax < WaitTime then
+    // mmInfo.Lines.Add('WaitTime = ' + IntToStr(WaitTime));
+    if (GLThreadWaitMax * 60000) < (GetTickCount - TimeBgn) then
     begin
       // message...
       mmInfo.Lines.Add('Превышен интервал ожидания потока');
       ThrReposCheck.Terminate;
     end;
     Application.ProcessMessages;
-    mmInfo.Lines.Add('WaitForSingleObject = live');
+    //mmInfo.Lines.Add('WaitForSingleObject = live');
   end;
 
   mmInfo.Lines.Add('WaitForSingleObject  =  end');
 
-end;
-
-procedure TFrmMain.Button1Click(Sender: TObject);
-begin
-  //ThrReposCheck.Start;
-  ThrReposCheck.Terminate;
 end;
 
 procedure TFrmMain.LVReposColumnClick(Sender: TObject; Column: TListColumn);
@@ -682,38 +665,36 @@ var
    ReposItem: TRepositoryRec;
    s: string;
    i: SmallInt;
+   TimeBegin: Cardinal;
 begin
   TimerTracker.Enabled := false;
   for i := 0 to Length(arReposList) -1 do
   begin
     if Not MM_AvtoCheckMode.Checked then Exit;
+    s := DateTimeToStr(IncHour(ReposItem.LastChecked, ReposItem.TimelAvtoCheck));
     if IncHour(arReposList[i].LastChecked, arReposList[i].TimelAvtoCheck) < Date + Time then
     begin
-      s := DateTimeToStr(IncHour(ReposItem.LastChecked, ReposItem.TimelAvtoCheck));
       mmInfo.Lines.Add(ReposItem.FullReposName + '  проверка ' + s);
-
-      ThrReposCheck := ThreadReposCheck.Create(i, true);
-      ThrReposCheck.Start;
-
-      mmInfo.Lines.Add('WaitForSingleObject  = begin');
-      while WaitForSingleObject(ThrReposCheck.Handle,  0) = WAIT_TIMEOUT do
+      ThrReposCheck := ThreadReposCheck.Create(i, false);
+      TimeBegin     := GetTickCount;
+      while WaitForSingleObject(ThrReposCheck.Handle,  100) = WAIT_TIMEOUT do
       begin
         Application.ProcessMessages;
-        mmInfo.Lines.Add('WaitForSingleObject = live');
-        sleep(100);
+        if (GLThreadWaitMax * 60000) < (GetTickCount - TimeBegin) then
+        begin
+          // message....
+          mmInfo.Lines.Add('Превышен интервал ожидания потока');
+          ThrReposCheck.Terminate;
+        end;
       end;
-
-      mmInfo.Lines.Add('WaitForSingleObject  =  end');
-
     end
     else
     begin
-      s := DateTimeToStr(IncHour(ReposItem.LastChecked, ReposItem.TimelAvtoCheck));
       mmInfo.Lines.Add(ReposItem.FullReposName + '  нет проверки ' + s);
     end;
   end;
 
-  // TimerTracker.Enabled := false;
+  TimerTracker.Enabled := false;
 end;
 
 end.
