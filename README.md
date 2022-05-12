@@ -9,10 +9,10 @@
 
  ---
 **Требования для компиляции и зависимости:**
-- RAD Studio Delphi 10.3 Rio и выше
+- RAD Studio Delphi 10.4 и выше
 
 **Requirements for compilation and dependences:**
-- RAD Studio Delphi 10.3 Rio and higher
+- RAD Studio Delphi 10.4 and higher
 
 **Дополнительные материалы. Additional (screenshots and video):**
 https://mega.nz/folder/aFY3DSpA#pC1lII1uGRSNHhG3aCcW0g
